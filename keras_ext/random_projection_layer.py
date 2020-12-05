@@ -3,12 +3,10 @@ Random projection layers form the core of this project. The weights theta_D (w/ 
 sum of a non-trainable set of initial weights theta_0, as well as an offset theta_off. theta_off is generated from an
 OffsetCreator instance, which projects a smaller trainable weight matrix theta_d (w/ cardinality d < D) onto theta_off.
 """
-from typing import Type
-
 import tensorflow as tf
-from tensorflow.keras import initializers
 from tensorflow.keras.layers import Layer
 
+from keras_ext.intrinsic_weights import IntrinsicWeights
 from keras_ext.offset_creator import OffsetCreator
 
 
@@ -16,13 +14,15 @@ class RandomProjectionLayer(Layer):
     """Version of Layer that randomly projects a lower-dimensional space onto the full-dimensional weights"""
 
     def __init__(self,
-                 offset_creator_class: Type[OffsetCreator] = None):
+                 offset_creator: OffsetCreator,
+                 intrinsic_weights: IntrinsicWeights):
         """
         Each RandomProjectionLayer instance is associated with an offset creator, and thus a lower-dimensional
         trainable space
         """
         super(RandomProjectionLayer, self).__init__()
-        self.offset_creator = offset_creator_class()
+        self.offset_creator = offset_creator
+        self.intrinsic_weights = intrinsic_weights
 
     def add_weight(self,
                    name=None,
@@ -38,9 +38,9 @@ class RandomProjectionLayer(Layer):
                    aggregation=tf.VariableAggregation.NONE,
                    **kwargs):
         """
-        Version of add_weight that creates both the non-trainable initial weights theta_0 and the offset theta_t
+        Version of add_weight that creates both the non-trainable initial weights theta_0 and the offset theta_off
         """
-        initializer = initializers.get(initializer)
+        initializer = tf.keras.initializers.get(initializer)
         if dtype is None:
             # get default float type
             dtype = tf.keras.backend.floatx()
@@ -52,4 +52,64 @@ class RandomProjectionLayer(Layer):
                               name=f'{name}_theta0')
 
         # create trainable offsets, theta_t
-        theta_off = self.offset_creator.test()
+        theta_off = self.offset_creator.create_offset(intrinsic_weights=self.intrinsic_weights,
+                                                      output_shape=shape)
+
+        # total weights are the sum of the initial weights and the offsets
+        theta = theta_0 + theta_off
+
+        if regularizer is not None:
+            self.add_loss(regularizer(theta))
+
+        return theta
+
+
+class DenseRandomProjectionLayer(RandomProjectionLayer):
+    """Dense version of random projection layer"""
+
+    def __init__(self,
+                 offset_creator: OffsetCreator,
+                 intrinsic_weights: IntrinsicWeights,
+                 units,
+                 activation=None,
+                 use_bias=True,
+                 kernel_initializer='glorot_uniform',
+                 bias_initializer='zeros',
+                 kernel_regularizer=None,
+                 bias_regularizer=None,
+                 **kwargs):
+        super(DenseRandomProjectionLayer, self).__init__(offset_creator, intrinsic_weights)
+        self.units = units
+        self.activation = tf.keras.activations.get(activation)
+        self.use_bias = use_bias
+        self.kernel_initializer = tf.keras.initializers.get(kernel_initializer)
+        self.bias_initializer = tf.keras.initializers.get(bias_initializer)
+        self.kernel_regularizer = tf.keras.regularizers.get(kernel_regularizer)
+        self.bias_regularizer = tf.keras.regularizers.get(bias_regularizer)
+        self.bias = None
+        self.kernel = None
+
+    def build(self, input_shape):
+        assert len(input_shape) >= 2
+        input_dim = input_shape[-1]
+
+        self.kernel = self.add_weight(shape=(input_dim, self.units),
+                                      name='kernel',
+                                      initializer=self.kernel_initializer,
+                                      regularizer=self.kernel_initializer)
+
+        if self.use_bias:
+            self.bias = self.add_weight(shape=(self.units,),
+                                        name='bias',
+                                        initializer=self.bias_initializer,
+                                        regularizer=self.bias_regularizer)
+
+        self.built = True
+
+    def call(self, inputs, **kwargs):
+        output = inputs @ self.kernel
+        if self.use_bias:
+            output = tf.nn.bias_add(output, self.bias)
+        if self.activation is not None:
+            output = self.activation(output)
+        return output
