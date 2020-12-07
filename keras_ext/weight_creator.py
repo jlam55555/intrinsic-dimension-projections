@@ -96,8 +96,8 @@ class RFFWeightCreator(WeightCreator):
     that onto full weight space"""
 
     def __init__(self,
-                 initial_weight_initializer: tf.initializers.Initializer = 'glorot_uniform',
-                 projection_matrix_initializer: tf.initializers.Initializer = 'glorot_uniform',
+                 initial_weight_initializer: tf.initializers.Initializer = 'glorot_normal',
+                 projection_matrix_initializer: tf.initializers.Initializer = 'glorot_normal',
                  frequency_samples: int = 50,
                  frequency_sample_mean: float = 0,
                  frequency_sample_std: float = 1):
@@ -117,9 +117,9 @@ class RFFWeightCreator(WeightCreator):
 
         # RFF projection: multiply by these random frequencies before applying sinusoids
         # TODO: experiment with this initializer
-        # rff_initializer = tf.initializers.RandomNormal(mean=self.frequency_sample_mean,
-        #                                                stddev=self.frequency_sample_std)
-        rff_initializer = tf.initializers.RandomUniform()
+        rff_initializer = tf.initializers.RandomNormal(mean=self.frequency_sample_mean,
+                                                       stddev=self.frequency_sample_std)
+        # rff_initializer = tf.initializers.RandomUniform(minval=0, maxval=1)
         rff_projection_matrix = tf.Variable(rff_initializer(shape=(intrinsic_weights.size, self.frequency_samples)),
                                             dtype=dtype,
                                             trainable=False,
@@ -135,7 +135,7 @@ class RFFWeightCreator(WeightCreator):
                                         trainable=False,
                                         name=f'{name}_projector')
 
-        # thunk to perform calculation; not a lambda b/c we want it to store an immediate calculation
+        # thunk to perform calculation
         @tf.function
         def out_thunk():
             rff_projection = intrinsic_weights @ rff_projection_matrix

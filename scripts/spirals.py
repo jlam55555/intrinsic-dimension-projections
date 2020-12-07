@@ -12,7 +12,7 @@ spiral_classifier = SpiralClassifier(N=500, sigma=0.25)
 # spiral_classifier.evaluate()
 # spiral_classifier.model.summary()
 
-spiral_classifier.build_projection_model(intrinsic_dim=100)
+spiral_classifier.build_projection_model(intrinsic_dim=50)
 spiral_classifier.train(epochs=5000)
 spiral_classifier.evaluate()
 spiral_classifier.model.summary()

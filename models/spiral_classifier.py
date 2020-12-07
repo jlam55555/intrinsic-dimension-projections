@@ -64,21 +64,28 @@ class SpiralClassifier:
 
     def build_projection_model(self, intrinsic_dim=100):
         intrinsic_weights = IntrinsicWeights(intrinsic_dim,
-                                             initializer='glorot_uniform')
-        # weight_creator = DenseLinearWeightCreator(initial_weight_initializer='glorot_uniform',
-        #                                           projection_matrix_initializer='glorot_uniform')
-        weight_creator = RFFWeightCreator(frequency_samples=2*intrinsic_dim)
+                                             initializer='glorot_normal')
+        weight_creator = DenseLinearWeightCreator(initial_weight_initializer='glorot_uniform',
+                                                  projection_matrix_initializer='glorot_uniform')
+        # weight_creator = RFFWeightCreator(frequency_samples=2*intrinsic_dim,
+        #                                   frequency_sample_std=2**-3)
 
         model = tf.keras.models.Sequential([
             tf.keras.layers.Input(shape=(2,)),
-            DenseRandomProjectionLayer(weight_creator, intrinsic_weights, 64),
+            DenseRandomProjectionLayer(weight_creator, intrinsic_weights, 64,
+                                       kernel_regularizer=tf.keras.regularizers.l1_l2(0.0001, 0.0001),
+                                       bias_regularizer=tf.keras.regularizers.l1_l2(0.0001, 0.0001)),
             tf.keras.layers.ReLU(),
-            DenseRandomProjectionLayer(weight_creator, intrinsic_weights, 64),
+            DenseRandomProjectionLayer(weight_creator, intrinsic_weights, 64,
+                                       kernel_regularizer=tf.keras.regularizers.l1_l2(0.0001, 0.0001),
+                                       bias_regularizer=tf.keras.regularizers.l1_l2(0.0001, 0.0001)),
             tf.keras.layers.ReLU(),
-            DenseRandomProjectionLayer(weight_creator, intrinsic_weights, 2)
+            DenseRandomProjectionLayer(weight_creator, intrinsic_weights, 2,
+                                       kernel_regularizer=tf.keras.regularizers.l1_l2(0.0001, 0.0001),
+                                       bias_regularizer=tf.keras.regularizers.l1_l2(0.0001, 0.0001))
         ])
 
-        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+        model.compile(optimizer=tf.keras.optimizers.Adam(lr=0.01),
                       loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
                       metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])
         self.model = model
@@ -89,10 +96,11 @@ class SpiralClassifier:
         # tensorboard logging
         # see: https://www.tensorflow.org/tensorboard/graphs
         logdir = "logs/fit/" + datetime.now().strftime("%Y%m%d-%H%M%S")
-        tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logdir)
 
         self.model.fit(self.x_train, self.y_train, epochs=epochs,
-                       callbacks=[tensorboard_callback])
+                       callbacks=[
+                           # tf.keras.callbacks.TensorBoard(log_dir=logdir),
+                                  tf.keras.callbacks.LearningRateScheduler(lambda epoch, lr: lr * 0.999)])
 
     def evaluate(self):
         assert self.model is not None

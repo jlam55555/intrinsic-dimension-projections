@@ -85,9 +85,16 @@ class DenseRandomProjectionLayer(ProjectionLayer):
         self.built = True
 
     def call(self, inputs, **kwargs):
-        output = inputs @ self.kernel_thunk()
+        kernel = self.kernel_thunk()
+        bias = self.bias_thunk()
+        if self.kernel_regularizer is not None:
+            self.add_loss(self.kernel_regularizer(kernel))
+        if self.bias_regularizer is not None:
+            self.add_loss(self.bias_regularizer(bias))
+
+        output = inputs @ kernel
         if self.use_bias:
-            output = tf.nn.bias_add(output, self.bias_thunk())
+            output = tf.nn.bias_add(output, bias)
         if self.activation is not None:
             output = self.activation(output)
         return output
