@@ -1,2 +1,4 @@
 venv/
 .idea/
+scripts/logs
+**/__pycache__

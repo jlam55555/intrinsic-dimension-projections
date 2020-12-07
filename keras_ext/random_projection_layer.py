@@ -5,6 +5,10 @@ OffsetCreator instance, which projects a smaller trainable weight matrix theta_d
 """
 import tensorflow as tf
 from tensorflow.keras.layers import Layer
+from tensorflow.python.eager import backprop
+from tensorflow.python.keras.engine import data_adapter
+from tensorflow.python.keras.engine.training import _minimize
+from tensorflow.python.layers.base import InputSpec
 
 from keras_ext.intrinsic_weights import IntrinsicWeights
 from keras_ext.offset_creator import OffsetCreator
@@ -27,7 +31,7 @@ class RandomProjectionLayer(Layer):
     def add_weight(self,
                    name=None,
                    shape=None,
-                   dtype=None,
+                   dtype=tf.keras.backend.floatx(),
                    initializer=None,
                    regularizer=None,
                    trainable=None,
@@ -41,27 +45,37 @@ class RandomProjectionLayer(Layer):
         Version of add_weight that creates both the non-trainable initial weights theta_0 and the offset theta_off
         """
         initializer = tf.keras.initializers.get(initializer)
-        if dtype is None:
-            # get default float type
-            dtype = tf.keras.backend.floatx()
+        regularizer = tf.keras.regularizers.get(regularizer)
+
+        weight_graph = self.offset_creator.create_weight(self.intrinsic_weights,
+                                                         name=f'{name}_weight',
+                                                         output_shape=shape)
+
+        return weight_graph
 
         # create non-trainable initial weights, theta_0
-        theta_0 = tf.Variable(initializer(shape),
-                              trainable=False,
-                              dtype=dtype,
-                              name=f'{name}_theta0')
-
-        # create trainable offsets, theta_t
-        theta_off = self.offset_creator.create_offset(intrinsic_weights=self.intrinsic_weights,
-                                                      output_shape=shape)
+        # theta_0 = tf.Variable(initializer(shape=shape),
+        #                       trainable=False,
+        #                       dtype=dtype,
+        #                       name=f'{name}_theta0')
+        #
+        # # create trainable offsets, theta_t
+        # theta_off = self.offset_creator.create_offset(intrinsic_weights=self.intrinsic_weights,
+        #                                               name=f'{name}_offset_weight',
+        #                                               output_shape=shape)
 
         # total weights are the sum of the initial weights and the offsets
-        theta = theta_0 + theta_off
+        # theta = tf.add(theta_0, theta_off)
+        # # theta = theta_0 + theta_0
+        #
+        # if regularizer is not None:
+        #     self.add_loss(regularizer(theta))
+        #
+        # print(theta_0, theta)
+        #
+        # return theta
 
-        if regularizer is not None:
-            self.add_loss(regularizer(theta))
-
-        return theta
+        # return theta_0, theta_off
 
 
 class DenseRandomProjectionLayer(RandomProjectionLayer):
@@ -86,30 +100,31 @@ class DenseRandomProjectionLayer(RandomProjectionLayer):
         self.bias_initializer = tf.keras.initializers.get(bias_initializer)
         self.kernel_regularizer = tf.keras.regularizers.get(kernel_regularizer)
         self.bias_regularizer = tf.keras.regularizers.get(bias_regularizer)
-        self.bias = None
-        self.kernel = None
+        self.bias_graph = None
+        self.kernel_graph = None
 
     def build(self, input_shape):
         assert len(input_shape) >= 2
         input_dim = input_shape[-1]
 
-        self.kernel = self.add_weight(shape=(input_dim, self.units),
-                                      name='kernel',
-                                      initializer=self.kernel_initializer,
-                                      regularizer=self.kernel_initializer)
+        self.kernel_graph = self.add_weight(shape=(input_dim, self.units),
+                                            name='kernel',
+                                            initializer=self.kernel_initializer,
+                                            regularizer=self.kernel_regularizer)
 
         if self.use_bias:
-            self.bias = self.add_weight(shape=(self.units,),
-                                        name='bias',
-                                        initializer=self.bias_initializer,
-                                        regularizer=self.bias_regularizer)
+            self.bias_graph = self.add_weight(shape=(self.units,),
+                                              name='bias',
+                                              initializer=self.bias_initializer,
+                                              regularizer=self.bias_regularizer)
 
+        self.input_spec = InputSpec(min_ndim=2, axes={-1: input_dim})
         self.built = True
 
     def call(self, inputs, **kwargs):
-        output = inputs @ self.kernel
+        output = inputs @ self.kernel_graph
         if self.use_bias:
-            output = tf.nn.bias_add(output, self.bias)
+            output = tf.nn.bias_add(output, self.bias_graph)
         if self.activation is not None:
             output = self.activation(output)
         return output
