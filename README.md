@@ -19,5 +19,13 @@ Based on [this paper][1] and [its associated codebase][2].
 - Experiment with different intrinsic weights for different layers?
 - Implement slightly-modified for inference? (i.e., hardcode the weights matrix so it doesn't have to be recalculated each time)
 
+### Style guide
+Placing a little bit of extra emphasis here because the codebase from the previous project was a little hard to decipher:
+- Attempt to adhere to PEP8 as best as possible (use IntelliJ linting/code refactor when possible)
+- Type hints in parameter lists/other initializations when possible to allow for maximum automated inferencing
+- Comment at beginning of each file to describe what the file is and defining relevant terms
+- Clear variable names (clarity at the cost of longer variable names)
+- Comments describing every function (except obvious cases and some overloaded methods) for maximum clarity
+
 [1]: https://arxiv.org/abs/1804.08838
 [2]: https://github.com/uber-research/intrinsic-dimension

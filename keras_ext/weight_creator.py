@@ -28,7 +28,7 @@ class WeightCreator:
 
     def __init__(self,
                  initial_weight_initializer: tf.initializers.Initializer = tf.initializers.RandomNormal()):
-        self.initial_weight_initializer = tf.initializers.get(initial_weight_initializer)
+        self.initial_weight_initializer = initial_weight_initializer
 
     def _create_weight_offset(self,
                               output_shape: tf.TensorShape,
@@ -88,4 +88,58 @@ class DenseLinearWeightCreator(WeightCreator):
         # return thunk that calculates the projection when called
         return tf.function(lambda: tf.reshape(intrinsic_weights @ projection_matrix,
                                               shape=output_shape,
-                                              name=f'{name}_offset'))
+                                              name=f'{name}_dense_offset'))
+
+
+class RFFWeightCreator(WeightCreator):
+    """Create random fourier feature projection -- first "frequency-samples" intrinsic dimension vector, then projects
+    that onto full weight space"""
+
+    def __init__(self,
+                 initial_weight_initializer: tf.initializers.Initializer = 'glorot_uniform',
+                 projection_matrix_initializer: tf.initializers.Initializer = 'glorot_uniform',
+                 frequency_samples: int = 50,
+                 frequency_sample_mean: float = 0,
+                 frequency_sample_std: float = 1):
+        super().__init__(initial_weight_initializer)
+        self.initial_weight_initializer = tf.initializers.get(initial_weight_initializer)
+        self.projection_matrix_initializer = tf.initializers.get(projection_matrix_initializer)
+        self.frequency_samples = frequency_samples
+        self.frequency_sample_mean = frequency_sample_mean
+        self.frequency_sample_std = frequency_sample_std
+
+    def _create_weight_offset(self,
+                              output_shape: tf.TensorShape,
+                              intrinsic_weights: IntrinsicWeights,
+                              name: str = None,
+                              dtype: tf.dtypes.DType = tf.keras.backend.floatx()) -> tf.function:
+        """Create RFF projection"""
+
+        # RFF projection: multiply by these random frequencies before applying sinusoids
+        # TODO: experiment with this initializer
+        # rff_initializer = tf.initializers.RandomNormal(mean=self.frequency_sample_mean,
+        #                                                stddev=self.frequency_sample_std)
+        rff_initializer = tf.initializers.RandomUniform()
+        rff_projection_matrix = tf.Variable(rff_initializer(shape=(intrinsic_weights.size, self.frequency_samples)),
+                                            dtype=dtype,
+                                            trainable=False,
+                                            name=f'{name}_rff_projector')
+
+        # create random projection matrix of RFF-upsampled features
+        total_output_dim = 1
+        for dim in output_shape:
+            total_output_dim *= dim
+        projection_matrix = tf.Variable(self.projection_matrix_initializer(shape=(2 * self.frequency_samples,
+                                                                                  total_output_dim)),
+                                        dtype=dtype,
+                                        trainable=False,
+                                        name=f'{name}_projector')
+
+        # thunk to perform calculation; not a lambda b/c we want it to store an immediate calculation
+        @tf.function
+        def out_thunk():
+            rff_projection = intrinsic_weights @ rff_projection_matrix
+            return tf.reshape(tf.concat((tf.cos(rff_projection), tf.sin(rff_projection)), axis=1) @ projection_matrix,
+                              shape=output_shape,
+                              name=f'{name}_rff_offset')
+        return out_thunk

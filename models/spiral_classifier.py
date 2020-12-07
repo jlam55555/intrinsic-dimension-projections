@@ -8,7 +8,7 @@ from datetime import datetime
 
 from keras_ext.intrinsic_weights import IntrinsicWeights
 from keras_ext.projection_layer import DenseRandomProjectionLayer
-from keras_ext.weight_creator import DenseLinearWeightCreator
+from keras_ext.weight_creator import DenseLinearWeightCreator, RFFWeightCreator
 
 
 class SpiralClassifier:
@@ -50,7 +50,7 @@ class SpiralClassifier:
         plt.scatter(self.spiral_2[:, 0], self.spiral_2[:, 1])
         plt.show()
 
-    def build_regular_model(self):
+    def build_direct_model(self):
         model = tf.keras.models.Sequential(layers=[tf.keras.layers.Input(shape=(2,)),
                                                    tf.keras.layers.Dense(64),
                                                    tf.keras.layers.ReLU(),
@@ -62,11 +62,12 @@ class SpiralClassifier:
                       metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])
         self.model = model
 
-    def build_proj_model(self, intrinsic_dim=100):
+    def build_projection_model(self, intrinsic_dim=100):
         intrinsic_weights = IntrinsicWeights(intrinsic_dim,
                                              initializer='glorot_uniform')
-        weight_creator = DenseLinearWeightCreator(initial_weight_initializer='glorot_uniform',
-                                                  projection_matrix_initializer='glorot_uniform')
+        # weight_creator = DenseLinearWeightCreator(initial_weight_initializer='glorot_uniform',
+        #                                           projection_matrix_initializer='glorot_uniform')
+        weight_creator = RFFWeightCreator(frequency_samples=2*intrinsic_dim)
 
         model = tf.keras.models.Sequential([
             tf.keras.layers.Input(shape=(2,)),
@@ -77,7 +78,7 @@ class SpiralClassifier:
             DenseRandomProjectionLayer(weight_creator, intrinsic_weights, 2)
         ])
 
-        model.compile(optimizer=tf.keras.optimizers.Adam(),
+        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
                       loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
                       metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])
         self.model = model
