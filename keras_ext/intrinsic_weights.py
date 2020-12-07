@@ -2,7 +2,8 @@
 Intrinsic weights are the set of d weights that get projected up onto the D weights of the network. One set of intrinsic
 weights is needed for each network and the same instance is used for all its layers.
 
-TODO: perhaps the above statement shouldn't be true? Maybe different intrinsic weights for different layers/layer types?
+This is a wrapper class around a trainable tf.Variable that stores the intrinsic weights, which may be used to store
+additional attributes about the intrinsic weights. (Currently this class doesn't do anything.)
 """
 
 import tensorflow as tf

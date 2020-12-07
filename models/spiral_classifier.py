@@ -83,8 +83,7 @@ class SpiralClassifier:
         self.model = model
 
     def train(self, epochs=100):
-        if self.model is None:
-            raise AssertionError('Build a model before training')
+        assert self.model is not None
 
         # tensorboard logging
         # see: https://www.tensorflow.org/tensorboard/graphs
@@ -95,7 +94,5 @@ class SpiralClassifier:
                        callbacks=[tensorboard_callback])
 
     def evaluate(self):
-        if self.model is None:
-            raise AssertionError('Build a model before evaluation')
-
+        assert self.model is not None
         self.model.evaluate(self.x_test, self.y_test)

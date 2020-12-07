@@ -1,3 +1,6 @@
+"""
+Versions of the tf.keras.layers Layers for use with intrinsic weight projection.
+"""
 from typing import Callable
 
 import tensorflow as tf
