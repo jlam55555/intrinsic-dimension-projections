@@ -23,7 +23,7 @@ class MNISTClassifier:
             tf.keras.layers.Dense(10)
         ])
 
-    def build_fc_projection_model(self, layers=2, width=128, intrinsic_dim=100):
+    def build_fc_projection_model(self, layers=2, width=128, intrinsic_dim=200):
         """Fully-connected model with projection layers"""
         intrinsic_weights = IntrinsicWeights(size=intrinsic_dim)
         weight_creator = DenseLinearWeightCreator(initial_weight_initializer='glorot_normal',

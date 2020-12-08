@@ -66,7 +66,7 @@ class DenseRandomProjectionLayer(ProjectionLayer):
         self.bias_initializer = tf.keras.initializers.get(bias_initializer)
         self.kernel_regularizer = tf.keras.regularizers.get(kernel_regularizer)
         self.bias_regularizer = tf.keras.regularizers.get(bias_regularizer)
-        self.bias_thunk = self.kernel_thunk = None
+        self.bias_thunk = self.kernel_thunk = lambda: None
 
     def build(self, input_shape):
         assert len(input_shape) >= 2
@@ -103,9 +103,8 @@ class DenseRandomProjectionLayer(ProjectionLayer):
 
 
 class _ConvProjectionLayer(ProjectionLayer):
-    """Abstract nD convolution layer (private, used as implementation base). Only the intrinsic parameters are trainable.
-
-    Largely copied from the Uber implementation"""
+    """Abstract nD convolution layer (private, used as implementation base). Only the intrinsic parameters are
+    trainable. Largely copied from the Uber implementation"""
 
     def __init__(self,
                  weight_creator: WeightCreator,
