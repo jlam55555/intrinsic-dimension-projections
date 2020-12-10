@@ -8,7 +8,7 @@ from datetime import datetime
 
 from keras_ext.intrinsic_weights import IntrinsicWeights
 from keras_ext.projection_layer import DenseRandomProjectionLayer
-from keras_ext.weight_creator import DenseLinearWeightCreator, RFFWeightCreator
+from keras_ext.weight_creator import DenseLinearWeightCreator, RFFWeightCreator, SquaredTermsWeightCreator
 
 
 class SpiralClassifier:
@@ -52,12 +52,12 @@ class SpiralClassifier:
 
     def build_direct_model(self):
         model = tf.keras.models.Sequential(layers=[tf.keras.layers.Input(shape=(2,)),
-                                                   tf.keras.layers.Dense(64),
+                                                   tf.keras.layers.Dense(5),
                                                    tf.keras.layers.ReLU(),
-                                                   tf.keras.layers.Dense(64),
+                                                   tf.keras.layers.Dense(5),
                                                    tf.keras.layers.ReLU(),
                                                    tf.keras.layers.Dense(2)])
-        model.compile(optimizer=tf.keras.optimizers.Adam(),
+        model.compile(optimizer=tf.keras.optimizers.Adam(lr=0.01),
                       loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
                       metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])
         self.model = model
@@ -65,18 +65,20 @@ class SpiralClassifier:
     def build_projection_model(self, intrinsic_dim=100):
         intrinsic_weights = IntrinsicWeights(intrinsic_dim,
                                              initializer='glorot_normal')
-        # weight_creator = DenseLinearWeightCreator(initial_weight_initializer='glorot_uniform',
-        #                                           projection_matrix_initializer='glorot_uniform')
-        weight_creator = RFFWeightCreator(frequency_samples=2*intrinsic_dim,
-                                          frequency_sample_std=2**-3)
+        weight_creator = DenseLinearWeightCreator(initial_weight_initializer='glorot_uniform',
+                                                  projection_matrix_initializer='glorot_uniform')
+        # weight_creator = RFFWeightCreator(frequency_samples=2*intrinsic_dim,
+        #                                   frequency_sample_std=2**-3)
+        # weight_creator = SquaredTermsWeightCreator(initial_weight_initializer='glorot_uniform',
+        #                                            projection_matrix_initializer='glorot_uniform')
 
         model = tf.keras.models.Sequential([
             tf.keras.layers.Input(shape=(2,)),
-            DenseRandomProjectionLayer(weight_creator, intrinsic_weights, 64,
+            DenseRandomProjectionLayer(weight_creator, intrinsic_weights, 32,
                                        kernel_regularizer=tf.keras.regularizers.l1_l2(0.0001, 0.0001),
                                        bias_regularizer=tf.keras.regularizers.l1_l2(0.0001, 0.0001)),
             tf.keras.layers.ReLU(),
-            DenseRandomProjectionLayer(weight_creator, intrinsic_weights, 64,
+            DenseRandomProjectionLayer(weight_creator, intrinsic_weights, 32,
                                        kernel_regularizer=tf.keras.regularizers.l1_l2(0.0001, 0.0001),
                                        bias_regularizer=tf.keras.regularizers.l1_l2(0.0001, 0.0001)),
             tf.keras.layers.ReLU(),
@@ -85,7 +87,7 @@ class SpiralClassifier:
                                        bias_regularizer=tf.keras.regularizers.l1_l2(0.0001, 0.0001))
         ])
 
-        model.compile(optimizer=tf.keras.optimizers.Adam(lr=0.001),
+        model.compile(optimizer=tf.keras.optimizers.Adam(lr=0.1),
                       loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
                       metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])
         self.model = model

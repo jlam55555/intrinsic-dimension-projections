@@ -91,6 +91,46 @@ class DenseLinearWeightCreator(WeightCreator):
                                               name=f'{name}_dense_offset'))
 
 
+class SquaredTermsWeightCreator(WeightCreator):
+    """Generates weights using a dense random linear projection and concats squared terms"""
+
+    def __init__(self,
+                 initial_weight_initializer: tf.initializers.Initializer = tf.initializers.RandomNormal(),
+                 projection_matrix_initializer: tf.initializers.Initializer = tf.initializers.RandomNormal()):
+        super().__init__(initial_weight_initializer)
+        self.initial_weight_initializer = tf.initializers.get(initial_weight_initializer)
+        self.projection_matrix_initializer = tf.initializers.get(projection_matrix_initializer)
+
+    def _create_weight_offset(self,
+                              output_shape: tf.TensorShape,
+                              intrinsic_weights: IntrinsicWeights,
+                              name: str = None,
+                              dtype: tf.dtypes.DType = tf.keras.backend.floatx()) -> tf.function:
+        """Create dense weight projection with squared terms"""
+
+        # create random projection matrix
+        total_output_dim = 1
+        for dim in output_shape:
+            total_output_dim *= dim
+        projection_matrix = tf.Variable(
+            tf.concat((
+                self.projection_matrix_initializer(shape=(intrinsic_weights.size, total_output_dim)),
+                0.1 * self.projection_matrix_initializer(shape=(intrinsic_weights.size, total_output_dim)),
+                0.01 * self.projection_matrix_initializer(shape=(intrinsic_weights.size, total_output_dim)),
+            ), axis=0),
+            dtype=dtype,
+            trainable=False,
+            name=f'{name}_projector')
+
+        # return thunk that calculates the projection when called
+        return tf.function(lambda: tf.reshape(tf.concat((intrinsic_weights.weights,
+                                                         tf.math.square(intrinsic_weights.weights),
+                                                         tf.math.pow(intrinsic_weights.weights, 3)), axis=1)
+                                              @ projection_matrix,
+                                              shape=output_shape,
+                                              name=f'{name}_dense_offset'))
+
+
 class RFFWeightCreator(WeightCreator):
     """Create random fourier feature projection -- first "frequency-samples" intrinsic dimension vector, then projects
     that onto full weight space"""
@@ -142,4 +182,5 @@ class RFFWeightCreator(WeightCreator):
             return tf.reshape(tf.concat((tf.cos(rff_projection), tf.sin(rff_projection)), axis=1) @ projection_matrix,
                               shape=output_shape,
                               name=f'{name}_rff_offset')
+
         return out_thunk
