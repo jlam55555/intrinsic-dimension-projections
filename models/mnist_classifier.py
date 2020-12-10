@@ -97,7 +97,10 @@ class MNISTClassifier:
     def train(self, epochs=100):
         assert self.model is not None
         self.model.fit(self.x_train, self.y_train, epochs=epochs,
-                       callbacks=[tf.keras.callbacks.LearningRateScheduler(lambda epoch, lr: lr * 0.999)])
+                       callbacks=[
+                           tf.keras.callbacks.LearningRateScheduler(lambda epoch, lr: lr * 0.999),
+                           tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
+                       ])
 
     def evaluate(self):
         assert self.model is not None

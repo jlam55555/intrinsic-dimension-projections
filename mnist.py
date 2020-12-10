@@ -9,7 +9,7 @@ mnist_classifier = MNISTClassifier()
 # things we can test:
 # initializers, intrinsic dimension, learning rate, network parameters
 
-epochs = 25
+epochs = 1000
 for intrinsic_dim in range(5):
     for initializer in ['glorot_normal', 'glorot_uniform']:
         for lr in [0.1, 0.01, 0.001]:
