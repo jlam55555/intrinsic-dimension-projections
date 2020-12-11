@@ -6,7 +6,7 @@ from tensorflow.python.keras.regularizers import l2
 
 from keras_ext.intrinsic_weights import IntrinsicWeights
 from keras_ext.projection_layer import DenseRandomProjectionLayer
-from keras_ext.weight_creator import DenseLinearWeightCreator, SquaredTermsWeightCreator
+from keras_ext.weight_creator import DenseLinearWeightCreator, SquaredTermsWeightCreator, SparseLinearWeightCreator
 
 
 class MNISTClassifier:
@@ -53,8 +53,9 @@ class MNISTClassifier:
         intrinsic_weights = IntrinsicWeights(size=intrinsic_dim)
         # weight_creator = DenseLinearWeightCreator(initial_weight_initializer='glorot_normal',
         #                                           projection_matrix_initializer='glorot_normal')
-        weight_creator = SquaredTermsWeightCreator(initial_weight_initializer=initializer,
-                                                   projection_matrix_initializer=initializer)
+        # weight_creator = SquaredTermsWeightCreator(initial_weight_initializer=initializer,
+        #                                            projection_matrix_initializer=initializer)
+        weight_creator = SparseLinearWeightCreator(initial_weight_initializer='glorot_uniform')
 
         self.model = tf.keras.models.Sequential([
             tf.keras.layers.InputLayer(input_shape=(28, 28, 1)),

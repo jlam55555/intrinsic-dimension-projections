@@ -21,6 +21,9 @@ TODO: things to experiment with:
 import tensorflow as tf
 
 from keras_ext.intrinsic_weights import IntrinsicWeights
+from sklearn.random_projection import SparseRandomProjection
+from scipy.sparse import find
+import numpy as np
 
 
 class WeightCreator:
@@ -184,3 +187,72 @@ class RFFWeightCreator(WeightCreator):
                               name=f'{name}_rff_offset')
 
         return out_thunk
+
+
+class SparseLinearWeightCreator(WeightCreator):
+    """Sparse linear random projection"""
+    """TODO: fix terrible performance"""
+
+    def __init__(self,
+                 initial_weight_initializer: tf.initializers.Initializer = 'glorot_normal',
+                 projection_matrix_initializer: tf.initializers.Initializer = 'glorot_normal'):
+        super().__init__(initial_weight_initializer)
+        self.initial_weight_initializer = tf.initializers.get(initial_weight_initializer)
+        self.projection_matrix_initializer = tf.initializers.get(projection_matrix_initializer)
+
+    def _create_weight_offset(self,
+                              output_shape: tf.TensorShape,
+                              intrinsic_weights: IntrinsicWeights,
+                              name: str = None,
+                              dtype: tf.dtypes.DType = tf.keras.backend.floatx()) -> tf.function:
+        """Create sparse weight projection -- copied from Uber repo with very little modification"""
+
+        if dtype is None:
+            dtype = tf.keras.backend.floatx()
+
+        # Create projection matrix ww
+        total_output_dim = 1
+        for dim in output_shape:
+            total_output_dim *= dim
+
+        # Generate location and relative scale of non zero elements
+        print('finding...')
+        M = SparseRandomProjection(intrinsic_weights.size)._make_random_matrix(intrinsic_weights.size, total_output_dim)
+        print('finding...')
+        fm = find(M)
+        print('finding...')
+
+        # Create sparse projection matrix from small vv to full theta space
+        ww0 = tf.SparseTensor(indices=np.array([fm[0], fm[1]]).T,
+                              values=fm[2],
+                              dense_shape=[intrinsic_weights.size, total_output_dim])
+
+        # Create diagonal normalization matrix that will be filled in when all layers are created, so that we can normalize each
+        # row of the projection matrix (with length equal to the total number of parameters in the model) once we have all its elements.
+        # This will hold the norms of the rows of the un-normalized projection matrix.
+        # normalizer = tf.Variable(tf.zeros(shape=intrinsic_weights.size, dtype=dtype),
+        #                          trainable=False,
+        #                          name='%s_normalizer' % name)
+
+        # Pre-multiply the normalizer by the low-rank parameter vector to avoid a sparse matrix - sparse matrix product,
+        # which is not well-supported in Tensorflow (instead of theta_full = (P*N^-1)*theta_small where P*N^-1 is a row-normalized
+        # projection matrix, do P*(N^-1*theta_small)). (N^-1*theta_small) can be written as simply an element-wise vector division.
+        # theta_small_norm = tf.divide(intrinsic_weights.weights, normalizer)
+
+        # Compute delta from theta_0 using sparse projection
+        # Note: sparse matrix must be first argument
+        # delta_theta_flat = tf.sparse.sparse_dense_matmul(ww, theta_small_norm, adjoint_a=True, adjoint_b=True)
+
+        # Create theta
+        # theta_offset = tf.reshape(delta_theta_flat, output_shape)
+
+        # Note: previous versions added only ww0 to _non_trainable_weights but skipped normalizer. Here we more correctly return both.
+        # return theta_offset, [ww0]
+        # return theta_offset, [ww0, normalizer]
+        return tf.function(lambda: tf.reshape(
+            tf.sparse.sparse_dense_matmul(tf.cast(ww0, dtype=dtype),
+                                          tf.divide(intrinsic_weights.weights,
+                                                    tf.math.sqrt(tf.sparse.reduce_sum(tf.cast(ww0, dtype=dtype), 1))),
+                                          adjoint_a=True,
+                                          adjoint_b=True),
+            shape=output_shape))
