@@ -100,7 +100,7 @@ class MNISTClassifier:
         self.model.fit(self.x_train, self.y_train, epochs=epochs,
                        callbacks=[
                            tf.keras.callbacks.LearningRateScheduler(lambda epoch, lr: lr * 0.999),
-                           tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
+                           tf.keras.callbacks.EarlyStopping(monitor='sparse_categorical_accuracy', patience=10)
                        ])
 
     def evaluate(self):
