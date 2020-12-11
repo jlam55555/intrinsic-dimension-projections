@@ -31,8 +31,8 @@ class MNISTClassifier:
                                   lr=0.001, initializer='he_uniform'):
         """Fully-connected model with projection layers"""
         intrinsic_weights = IntrinsicWeights(size=intrinsic_dim)
-        weight_creator = DenseLinearWeightCreator(initial_weight_initializer=initializer,
-                                                  projection_matrix_initializer=initializer)
+        weight_creator = DenseLinearWeightCreator(initial_weight_initializer='random_normal',
+                                                  projection_matrix_initializer='random_uniform')
         # weight_creator = SquaredTermsWeightCreator(initial_weight_initializer='glorot_uniform',
         #                                            projection_matrix_initializer='random_uniform')
 

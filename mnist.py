@@ -22,7 +22,7 @@ mnist_classifier = MNISTClassifier()
 # mnist_classifier.train(epochs=epochs)
 # mnist_classifier.evaluate()
 epochs = 1000
-intrinsic_dims = range(6, 7)
+intrinsic_dims = range(8,9)
 initializers = ['glorot_uniform'] #['glorot_normal', 'glorot_uniform']
 lrs = [0.0001] #[0.1, 0.01, 0.001]
 model_types = [mnist_classifier.build_linear_fc_projection_model,
