@@ -1,4 +1,5 @@
 from keras_ext.intrinsic_weights import IntrinsicWeights
+from keras_ext.projection_layer import DenseRandomProjectionLayer
 from keras_ext.weight_creator import DenseLinearWeightCreator, SquaredTermsWeightCreator, RFFWeightCreator
 from models.mnist_classifier import MNISTClassifier
 from datetime import datetime
@@ -15,10 +16,11 @@ epochs = 100
 intrinsic_dims = np.linspace(100, 1000, 10, dtype=int)
 initializers = ['he_normal']
 lrs = [0.001]
-model_types = ['linear', 'power']
+model_types = ['power']
+train_proj = False
 
 
-def run_model(model_type, epochs, initializer, lr):
+def run_model(model_type, epochs, initializer, lr, train_proj: bool = False):
     mnist_classifier = MNISTClassifier()
 
     intrinsic_weights = IntrinsicWeights(size=intrinsic_dim)
@@ -29,8 +31,8 @@ def run_model(model_type, epochs, initializer, lr):
     elif model_type == 'power':
         weight_creator = SquaredTermsWeightCreator(initial_weight_initializer=initializer,
                                                    projection_matrix_initializer='random_normal',
-                                                   squared_terms_coefficient=0.1,
-                                                   cubed_terms_coefficient=0.01)
+                                                   squared_terms_coefficient=1,
+                                                   cubed_terms_coefficient=1)
     elif model_type == 'rff':
         weight_creator = RFFWeightCreator(initial_weight_initializer=initializer,
                                           projection_matrix_initializer='random_normal',
@@ -44,6 +46,19 @@ def run_model(model_type, epochs, initializer, lr):
                                             weight_creator,
                                             width=200,
                                             lr=lr)
+
+    # save projection matrices before
+    projection_matrices_before = []
+    if train_proj:
+        for layer in mnist_classifier.model.layers:
+            if isinstance(layer, DenseRandomProjectionLayer):
+                projection_matrices_before.append([
+                    layer.trainable_weight1 and layer.trainable_weight1.numpy(),
+                    layer.trainable_weight2 and layer.trainable_weight2.numpy(),
+                    layer.trainable_weight3 and layer.trainable_weight3.numpy(),
+                    layer.trainable_weight4 and layer.trainable_weight4.numpy(),
+                ])
+
     print(f'epochs: {epochs}; intrinsic_dim: {intrinsic_dim}; initializer: {initializer}; lr: {lr}; type: {model_type}')
     summary_str = ''
     def print_fn(line):
@@ -52,6 +67,18 @@ def run_model(model_type, epochs, initializer, lr):
     mnist_classifier.model.summary(print_fn=print_fn)
     hist = mnist_classifier.train(epochs=epochs)
     eval = mnist_classifier.evaluate()
+
+    # save projection matrices after
+    projection_matrices_after = []
+    if train_proj:
+        for layer in mnist_classifier.model.layers:
+            if isinstance(layer, DenseRandomProjectionLayer):
+                projection_matrices_after.append([
+                    layer.trainable_weight1 and layer.trainable_weight1.numpy(),
+                    layer.trainable_weight2 and layer.trainable_weight2.numpy(),
+                    layer.trainable_weight3 and layer.trainable_weight3.numpy(),
+                    layer.trainable_weight4 and layer.trainable_weight4.numpy(),
+                ])
 
     # write results to file; write this for every model training to safeguard against OOM error
     # using multiple processes *should* fix this but not sure
@@ -67,7 +94,10 @@ def run_model(model_type, epochs, initializer, lr):
         'history': hist.history,
         'eval': eval,
         'summary': summary_str,
-        'timestamp': timestamp
+        'timestamp': timestamp,
+        'train_proj': train_proj,
+        'projection_before': projection_matrices_before,
+        'projection_after': projection_matrices_after
     }
     out_filename = f'runs/mnist_normalized_{model_type}_{intrinsic_dim}_{timestamp}.pkl'
     with open(out_filename, 'wb') as out_handle:
@@ -80,6 +110,6 @@ for intrinsic_dim in intrinsic_dims:
             for model_type in model_types:
                 # see: https://github.com/tensorflow/tensorflow/issues/36465#issuecomment-582749350
                 # run each model in a new process so that memory gets cleaned up
-                process_eval = mp.Process(target=run_model, args=(model_type, epochs, initializer, lr))
+                process_eval = mp.Process(target=run_model, args=(model_type, epochs, initializer, lr, train_proj))
                 process_eval.start()
                 process_eval.join()

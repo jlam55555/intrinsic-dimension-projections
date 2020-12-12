@@ -30,8 +30,14 @@ class WeightCreator:
     """Generate weights given a desired output shape and an intrinsic matrix"""
 
     def __init__(self,
-                 initial_weight_initializer: tf.initializers.Initializer = tf.initializers.RandomNormal()):
+                 initial_weight_initializer: tf.initializers.Initializer = tf.initializers.RandomNormal(),
+                 trainable_proj: bool = False):
         self.initial_weight_initializer = initial_weight_initializer
+
+        # for testing training projection matrices/B matrix in RFF
+        self.trainable_proj: bool = trainable_proj
+        self.trainable_weights1: tf.Variable = None
+        self.trainable_weights2: tf.Variable = None
 
     def _create_weight_offset(self,
                               output_shape: tf.TensorShape,
@@ -66,8 +72,9 @@ class DenseLinearWeightCreator(WeightCreator):
 
     def __init__(self,
                  initial_weight_initializer: tf.initializers.Initializer = tf.initializers.RandomNormal(),
-                 projection_matrix_initializer: tf.initializers.Initializer = tf.initializers.RandomNormal()):
-        super().__init__(initial_weight_initializer)
+                 projection_matrix_initializer: tf.initializers.Initializer = tf.initializers.RandomNormal(),
+                 trainable_proj: bool = False):
+        super().__init__(initial_weight_initializer, trainable_proj)
         self.initial_weight_initializer = tf.initializers.get(initial_weight_initializer)
         self.projection_matrix_initializer = tf.initializers.get(projection_matrix_initializer)
 
@@ -85,10 +92,14 @@ class DenseLinearWeightCreator(WeightCreator):
         projection_matrix = tf.Variable(self.projection_matrix_initializer(shape=(intrinsic_weights.size,
                                                                                   total_output_dim)),
                                         dtype=dtype,
-                                        trainable=False,
+                                        trainable=self.trainable_proj,
                                         name=f'{name}_projector')
 
-        projection_matrix = tf.divide(projection_matrix, tf.reduce_sum(projection_matrix, axis=1)[:, tf.newaxis])
+        # when finding the distribution of the trainable weights
+        if self.trainable_proj:
+            self.trainable_weights1 = projection_matrix
+
+        # projection_matrix = tf.divide(projection_matrix, tf.reduce_sum(projection_matrix, axis=1)[:, tf.newaxis])
 
         # return thunk that calculates the projection when called
         return tf.function(lambda: tf.reshape(intrinsic_weights @ projection_matrix,
@@ -103,8 +114,9 @@ class SquaredTermsWeightCreator(WeightCreator):
                  initial_weight_initializer: tf.initializers.Initializer = tf.initializers.RandomNormal(),
                  projection_matrix_initializer: tf.initializers.Initializer = tf.initializers.RandomNormal(),
                  squared_terms_coefficient: float = 0.1,
-                 cubed_terms_coefficient: float = 0.01):
-        super().__init__(initial_weight_initializer)
+                 cubed_terms_coefficient: float = 0.01,
+                 trainable_proj: bool = False):
+        super().__init__(initial_weight_initializer, trainable_proj)
         self.initial_weight_initializer = tf.initializers.get(initial_weight_initializer)
         self.projection_matrix_initializer = tf.initializers.get(projection_matrix_initializer)
         self.squared_terms_coefficient = squared_terms_coefficient
@@ -128,10 +140,14 @@ class SquaredTermsWeightCreator(WeightCreator):
                 self.cubed_terms_coefficient * self.projection_matrix_initializer(shape=(intrinsic_weights.size, total_output_dim)),
             ), axis=0),
             dtype=dtype,
-            trainable=False,
+            trainable=self.trainable_proj,
             name=f'{name}_projector')
 
-        projection_matrix = tf.divide(projection_matrix, tf.reduce_sum(projection_matrix, axis=1)[:, tf.newaxis])
+        # when finding the distribution of trainable projection
+        if self.trainable_proj:
+            self.trainable_weights1 = projection_matrix
+
+        # projection_matrix = tf.divide(projection_matrix, tf.reduce_sum(projection_matrix, axis=1)[:, tf.newaxis])
 
         # return thunk that calculates the projection when called
         return tf.function(lambda: tf.reshape(tf.concat((intrinsic_weights.weights,
@@ -143,16 +159,17 @@ class SquaredTermsWeightCreator(WeightCreator):
 
 
 class RFFWeightCreator(WeightCreator):
-    """Create random fourier feature projection -- first "frequency-samples" intrinsic dimension vector, then projects
-    that onto full weight space"""
+    """Create random fourier feature projection -- first "frequency-samples" intrinsic dimension vector, concats to
+    intrinsic dimension weights, then projects augmented intrinsic dimensions onto full weight space"""
 
     def __init__(self,
                  initial_weight_initializer: tf.initializers.Initializer = 'glorot_normal',
                  projection_matrix_initializer: tf.initializers.Initializer = 'glorot_normal',
                  frequency_samples: int = 50,
                  frequency_sample_mean: float = 0,
-                 frequency_sample_std: float = 1):
-        super().__init__(initial_weight_initializer)
+                 frequency_sample_std: float = 1,
+                 trainable_proj: bool = False):
+        super().__init__(initial_weight_initializer, trainable_proj)
         self.initial_weight_initializer = tf.initializers.get(initial_weight_initializer)
         self.projection_matrix_initializer = tf.initializers.get(projection_matrix_initializer)
         self.frequency_samples = frequency_samples
@@ -173,7 +190,7 @@ class RFFWeightCreator(WeightCreator):
         # rff_initializer = tf.initializers.RandomUniform(minval=0, maxval=1)
         rff_projection_matrix = tf.Variable(rff_initializer(shape=(intrinsic_weights.size, self.frequency_samples)),
                                             dtype=dtype,
-                                            trainable=False,
+                                            trainable=self.trainable_proj,
                                             name=f'{name}_rff_projector')
 
         # create random projection matrix of RFF-upsampled features
@@ -183,10 +200,15 @@ class RFFWeightCreator(WeightCreator):
         projection_matrix = tf.Variable(self.projection_matrix_initializer(shape=(2 * self.frequency_samples + intrinsic_weights.size,
                                                                                   total_output_dim)),
                                         dtype=dtype,
-                                        trainable=False,
+                                        trainable=self.trainable_proj,
                                         name=f'{name}_projector')
 
-        projection_matrix = tf.divide(projection_matrix, tf.reduce_sum(projection_matrix, axis=1)[:, tf.newaxis])
+        # when finding the distribution of parameters
+        if self.trainable_proj:
+            self.trainable_weights1 = rff_projection_matrix
+            self.trainable_weights2 = projection_matrix
+
+        # projection_matrix = tf.divide(projection_matrix, tf.reduce_sum(projection_matrix, axis=1)[:, tf.newaxis])
 
         # thunk to perform calculation
         @tf.function
@@ -201,9 +223,10 @@ class RFFWeightCreator(WeightCreator):
         return out_thunk
 
 
+# FIXME: not in use, not working correctly
 class SparseLinearWeightCreator(WeightCreator):
     """Sparse linear random projection"""
-    """TODO: fix terrible performance"""
+    """TODO: fix terrible performance, not working correctly (sometimes gives nans)"""
 
     def __init__(self,
                  initial_weight_initializer: tf.initializers.Initializer = 'glorot_normal',

@@ -57,6 +57,7 @@ class DenseRandomProjectionLayer(ProjectionLayer):
                  bias_initializer='zeros',
                  kernel_regularizer=None,
                  bias_regularizer=None,
+                 trainable_proj=False,
                  **kwargs):
         super().__init__(weight_creator, intrinsic_weights, **kwargs)
         self.units = units
@@ -68,6 +69,13 @@ class DenseRandomProjectionLayer(ProjectionLayer):
         self.bias_regularizer = tf.keras.regularizers.get(bias_regularizer)
         self.bias_thunk = self.kernel_thunk = lambda: None
 
+        # if training the projection
+        self.trainable_proj = trainable_proj
+        self.trainable_weight1: tf.Variable = None
+        self.trainable_weight2: tf.Variable = None
+        self.trainable_weight3: tf.Variable = None
+        self.trainable_weight4: tf.Variable = None
+
     def build(self, input_shape):
         assert len(input_shape) >= 2
         input_dim = input_shape[-1]
@@ -77,11 +85,23 @@ class DenseRandomProjectionLayer(ProjectionLayer):
                                             initializer=self.kernel_initializer,
                                             regularizer=self.kernel_regularizer)
 
+        # see notes in report: trainable variables have to be members of the layer class;
+        # up to two trainable projection variables for a weight
+        if self.trainable_proj:
+            self.trainable_weight1 = self.weight_creator.trainable_weights1
+            self.trainable_weight2 = self.weight_creator.trainable_weights2
+
         if self.use_bias:
             self.bias_thunk = self.add_weight(shape=(self.units,),
                                               name='bias',
                                               initializer=self.bias_initializer,
                                               regularizer=self.bias_regularizer)
+
+        # see notes in report: trainable variables have to be members of the layer class;
+        # up to two trainable projection variables for a weight
+        if self.trainable_proj:
+            self.trainable_weight3 = self.weight_creator.trainable_weights1
+            self.trainable_weight4 = self.weight_creator.trainable_weights2
 
         self.input_spec = InputSpec(min_ndim=2, axes={-1: input_dim})
         self.built = True
