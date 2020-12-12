@@ -172,7 +172,7 @@ class RFFWeightCreator(WeightCreator):
         total_output_dim = 1
         for dim in output_shape:
             total_output_dim *= dim
-        projection_matrix = tf.Variable(self.projection_matrix_initializer(shape=(2 * self.frequency_samples,
+        projection_matrix = tf.Variable(self.projection_matrix_initializer(shape=(2 * self.frequency_samples + intrinsic_weights.size,
                                                                                   total_output_dim)),
                                         dtype=dtype,
                                         trainable=False,
@@ -182,7 +182,9 @@ class RFFWeightCreator(WeightCreator):
         @tf.function
         def out_thunk():
             rff_projection = intrinsic_weights @ rff_projection_matrix
-            return tf.reshape(tf.concat((tf.cos(rff_projection), tf.sin(rff_projection)), axis=1) @ projection_matrix,
+            return tf.reshape(tf.concat((intrinsic_weights.weights,
+                                         tf.cos(rff_projection),
+                                         tf.sin(rff_projection)), axis=1) @ projection_matrix,
                               shape=output_shape,
                               name=f'{name}_rff_offset')
 

@@ -6,7 +6,8 @@ from tensorflow.python.keras.regularizers import l2
 
 from keras_ext.intrinsic_weights import IntrinsicWeights
 from keras_ext.projection_layer import DenseRandomProjectionLayer
-from keras_ext.weight_creator import DenseLinearWeightCreator, SquaredTermsWeightCreator, SparseLinearWeightCreator
+from keras_ext.weight_creator import DenseLinearWeightCreator, SquaredTermsWeightCreator, SparseLinearWeightCreator, \
+    WeightCreator
 
 
 class MNISTClassifier:
@@ -27,50 +28,30 @@ class MNISTClassifier:
                            loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
                            metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])
 
-    def build_linear_fc_projection_model(self, layers=2, width=128, intrinsic_dim=200,
-                                         lr=0.001, initializer='he_uniform'):
+    def build_projection_model(self,
+                               intrinsic_weights: IntrinsicWeights,
+                               weight_creator: WeightCreator,
+                               layers=2,
+                               width=128,
+                               lr=0.001,
+                               kernel_regularizer = l2(1e-3),
+                               bias_regularizer = l2(1e-3)):
         """Fully-connected model with projection layers"""
-        intrinsic_weights = IntrinsicWeights(size=intrinsic_dim)
-        weight_creator = DenseLinearWeightCreator(initial_weight_initializer=initializer,
-                                                  projection_matrix_initializer='random_normal')
-        # weight_creator = SquaredTermsWeightCreator(initial_weight_initializer='glorot_uniform',
-        #                                            projection_matrix_initializer='random_uniform')
-
         self.model = tf.keras.models.Sequential([
             tf.keras.layers.InputLayer(input_shape=(28, 28, 1)),
             tf.keras.layers.Flatten(),
-            *[DenseRandomProjectionLayer(weight_creator, intrinsic_weights, width, activation='relu',
-                                         kernel_regularizer=l2(1e-3),
-                                         bias_regularizer=l2(1e-3))
+            *[DenseRandomProjectionLayer(weight_creator,
+                                         intrinsic_weights,
+                                         width,
+                                         activation='relu',
+                                         kernel_regularizer=kernel_regularizer,
+                                         bias_regularizer=bias_regularizer)
               for _ in range(layers)],
-            DenseRandomProjectionLayer(weight_creator, intrinsic_weights, 10,
-                                       kernel_regularizer=l2(1e-3),
-                                       bias_regularizer=l2(1e-3))
-        ])
-        self.model.compile(optimizer=tf.keras.optimizers.Adam(lr=lr),
-                           loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-                           metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])
-
-    def build_squared_fc_projection_model(self, layers=2, width=128, intrinsic_dim=200,
-                                          lr=0.001, initializer='he_uniform'):
-        """Fully-connected model with projection layers"""
-        intrinsic_weights = IntrinsicWeights(size=intrinsic_dim)
-        # weight_creator = DenseLinearWeightCreator(initial_weight_initializer='glorot_normal',
-        #                                           projection_matrix_initializer='glorot_normal')
-        weight_creator = SquaredTermsWeightCreator(initial_weight_initializer=initializer,
-                                                   projection_matrix_initializer='random_normal')
-        # weight_creator = SparseLinearWeightCreator(initial_weight_initializer='glorot_uniform')
-
-        self.model = tf.keras.models.Sequential([
-            tf.keras.layers.InputLayer(input_shape=(28, 28, 1)),
-            tf.keras.layers.Flatten(),
-            *[DenseRandomProjectionLayer(weight_creator, intrinsic_weights, width, activation='relu',
-                                         kernel_regularizer=l2(1e-3),
-                                         bias_regularizer=l2(1e-3))
-              for _ in range(layers)],
-            DenseRandomProjectionLayer(weight_creator, intrinsic_weights, 10,
-                                       kernel_regularizer=l2(1e-3),
-                                       bias_regularizer=l2(1e-3))
+            DenseRandomProjectionLayer(weight_creator,
+                                       intrinsic_weights,
+                                       10,
+                                       kernel_regularizer=kernel_regularizer,
+                                       bias_regularizer=bias_regularizer)
         ])
         self.model.compile(optimizer=tf.keras.optimizers.Adam(lr=lr),
                            loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
