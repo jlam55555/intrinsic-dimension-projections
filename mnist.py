@@ -8,7 +8,8 @@ import pickle
 
 import tensorflow as tf
 gpus = tf.config.experimental.list_physical_devices('GPU')
-tf.config.experimental.set_memory_growth(gpus[0], True)
+if gpus:
+    tf.config.experimental.set_memory_growth(gpus[0], True)
 
 epochs = 100
 intrinsic_dims = np.linspace(100, 1000, 10, dtype=int)
@@ -60,6 +61,8 @@ def run_model(model_type, epochs, initializer, lr):
         'epochs': epochs,
         'initializer': initializer,
         'lr': lr,
+        'squared_coefficient': weight_creator.squared_terms_coefficient if model_type == 'power' else None,
+        'cubed_coefficient': weight_creator.cubed_terms_coefficient if model_type == 'power' else None,
         'intrinsic_dim': intrinsic_dim,
         'history': hist.history,
         'eval': eval,
