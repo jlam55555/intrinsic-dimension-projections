@@ -64,9 +64,13 @@ class MNISTClassifier:
         self.model = tf.keras.models.Sequential([
             tf.keras.layers.InputLayer(input_shape=(28, 28, 1)),
             tf.keras.layers.Flatten(),
-            *[DenseRandomProjectionLayer(weight_creator, intrinsic_weights, width, activation='relu')
+            *[DenseRandomProjectionLayer(weight_creator, intrinsic_weights, width, activation='relu',
+                                         kernel_regularizer=l2(1e-3),
+                                         bias_regularizer=l2(1e-3))
               for _ in range(layers)],
-            DenseRandomProjectionLayer(weight_creator, intrinsic_weights, 10)
+            DenseRandomProjectionLayer(weight_creator, intrinsic_weights, 10,
+                                       kernel_regularizer=l2(1e-3),
+                                       bias_regularizer=l2(1e-3))
         ])
         self.model.compile(optimizer=tf.keras.optimizers.Adam(lr=lr),
                            loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
