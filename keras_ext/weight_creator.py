@@ -88,7 +88,7 @@ class DenseLinearWeightCreator(WeightCreator):
                                         trainable=False,
                                         name=f'{name}_projector')
 
-        projection_matrix = tf.divide(projection_matrix, tf.reduce_sum(projection_matrix, axis=1))
+        projection_matrix = tf.divide(projection_matrix, tf.reduce_sum(projection_matrix, axis=1)[:, tf.newaxis])
 
         # return thunk that calculates the projection when called
         return tf.function(lambda: tf.reshape(intrinsic_weights @ projection_matrix,
@@ -131,7 +131,7 @@ class SquaredTermsWeightCreator(WeightCreator):
             trainable=False,
             name=f'{name}_projector')
 
-        projection_matrix = tf.divide(projection_matrix, tf.reduce_sum(projection_matrix, axis=1))
+        projection_matrix = tf.divide(projection_matrix, tf.reduce_sum(projection_matrix, axis=1)[:, tf.newaxis])
 
         # return thunk that calculates the projection when called
         return tf.function(lambda: tf.reshape(tf.concat((intrinsic_weights.weights,
@@ -186,7 +186,7 @@ class RFFWeightCreator(WeightCreator):
                                         trainable=False,
                                         name=f'{name}_projector')
 
-        projection_matrix = tf.divide(projection_matrix, tf.reduce_sum(projection_matrix, axis=1))
+        projection_matrix = tf.divide(projection_matrix, tf.reduce_sum(projection_matrix, axis=1)[:, tf.newaxis])
 
         # thunk to perform calculation
         @tf.function
