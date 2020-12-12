@@ -23,7 +23,9 @@ def run_model(model_type, epochs, initializer, lr):
                                                   projection_matrix_initializer='random_normal')
     elif model_type == 'power':
         weight_creator = SquaredTermsWeightCreator(initial_weight_initializer=initializer,
-                                                   projection_matrix_initializer='random_normal')
+                                                   projection_matrix_initializer='random_normal',
+                                                   squared_terms_coefficient=0.1,
+                                                   cubed_terms_coefficient=0.01)
     elif model_type == 'rff':
         weight_creator = RFFWeightCreator(initial_weight_initializer=initializer,
                                           projection_matrix_initializer='random_normal',
