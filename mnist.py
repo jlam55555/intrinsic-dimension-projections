@@ -37,7 +37,8 @@ def run_model(model_type, epochs, initializer, lr):
         'lr': lr,
         'intrinsic_dim': intrinsic_dim,
         'history': hist.history,
-        'eval': eval
+        'eval': eval,
+        'summary': summary_str
     }
     out_filename = f'runs/mnist_{model_type}_{intrinsic_dim}.pkl'
     with open(out_filename, 'wb') as out_handle:

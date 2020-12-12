@@ -3,3 +3,4 @@ venv/
 experiments/logs
 **/__pycache__
 runs/
+test/
