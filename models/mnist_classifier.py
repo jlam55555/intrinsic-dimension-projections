@@ -28,11 +28,11 @@ class MNISTClassifier:
                            metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])
 
     def build_linear_fc_projection_model(self, layers=2, width=128, intrinsic_dim=200,
-                                  lr=0.001, initializer='he_uniform'):
+                                         lr=0.001, initializer='he_uniform'):
         """Fully-connected model with projection layers"""
         intrinsic_weights = IntrinsicWeights(size=intrinsic_dim)
-        weight_creator = DenseLinearWeightCreator(initial_weight_initializer='random_normal',
-                                                  projection_matrix_initializer='random_uniform')
+        weight_creator = DenseLinearWeightCreator(initial_weight_initializer=initializer,
+                                                  projection_matrix_initializer='random_normal')
         # weight_creator = SquaredTermsWeightCreator(initial_weight_initializer='glorot_uniform',
         #                                            projection_matrix_initializer='random_uniform')
 
@@ -52,7 +52,7 @@ class MNISTClassifier:
                            metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])
 
     def build_squared_fc_projection_model(self, layers=2, width=128, intrinsic_dim=200,
-                                  lr=0.001, initializer='he_uniform'):
+                                          lr=0.001, initializer='he_uniform'):
         """Fully-connected model with projection layers"""
         intrinsic_weights = IntrinsicWeights(size=intrinsic_dim)
         # weight_creator = DenseLinearWeightCreator(initial_weight_initializer='glorot_normal',
@@ -77,19 +77,25 @@ class MNISTClassifier:
 
         self.model = tf.keras.models.Sequential([
             tf.keras.layers.InputLayer(input_shape=(28, 28, 1)),
-            tf.keras.layers.Conv2D(16, kernel_size=3, strides=1, init='he_normal', padding='valid', activation='relu', kernel_regularizer=l2(weight_decay)),
-            tf.keras.layers.Conv2D(16, 3, 3, init='he_normal', padding='valid', activation='relu', kernel_regularizer=l2(weight_decay)),
+            tf.keras.layers.Conv2D(16, kernel_size=3, strides=1, init='he_normal', padding='valid', activation='relu',
+                                   kernel_regularizer=l2(weight_decay)),
+            tf.keras.layers.Conv2D(16, 3, 3, init='he_normal', padding='valid', activation='relu',
+                                   kernel_regularizer=l2(weight_decay)),
             tf.keras.layers.MaxPooling2D((2, 2)),
-            tf.keras.layers.Conv2D(16, 3, 3, init='he_normal', padding='valid', activation='relu', kernel_regularizer=l2(weight_decay)),
+            tf.keras.layers.Conv2D(16, 3, 3, init='he_normal', padding='valid', activation='relu',
+                                   kernel_regularizer=l2(weight_decay)),
             tf.keras.layers.BatchNormalization(momentum=0.5),
-            tf.keras.layers.Conv2D(16, 3, 3, init='he_normal', padding='valid', activation='relu', kernel_regularizer=l2(weight_decay)),  # (8, 8)
+            tf.keras.layers.Conv2D(16, 3, 3, init='he_normal', padding='valid', activation='relu',
+                                   kernel_regularizer=l2(weight_decay)),  # (8, 8)
             tf.keras.layers.MaxPooling2D((2, 2)),  # (4, 4)
             tf.keras.layers.Flatten(),
-            tf.keras.layers.Dense(800, kernel_initializer='he_normal', activation='relu', kernel_regularizer=l2(weight_decay)),
+            tf.keras.layers.Dense(800, kernel_initializer='he_normal', activation='relu',
+                                  kernel_regularizer=l2(weight_decay)),
             tf.keras.layers.Dense(800, kernel_initializer='he_normal', kernel_regularizer=l2(weight_decay)),
             tf.keras.layers.BatchNormalization(momentum=0.5),
             tf.keras.layers.Activation('relu'),
-            tf.keras.layers.Dense(500, kernel_initializer='he_normal', activation='relu', kernel_regularizer=l2(weight_decay)),
+            tf.keras.layers.Dense(500, kernel_initializer='he_normal', activation='relu',
+                                  kernel_regularizer=l2(weight_decay)),
             tf.keras.layers.Dense(10, kernel_initializer='he_normal', kernel_regularizer=l2(weight_decay)),
         ])
         self.model.compile(optimizer=tf.keras.optimizers.Adam(),
@@ -100,13 +106,13 @@ class MNISTClassifier:
         pass
 
     def train(self, epochs=100):
-        assert self.model is not None
-        self.model.fit(self.x_train, self.y_train, epochs=epochs,
-                       callbacks=[
-                           tf.keras.callbacks.LearningRateScheduler(lambda epoch, lr: lr * 0.999),
-                           tf.keras.callbacks.EarlyStopping(monitor='sparse_categorical_accuracy', patience=10)
-                       ])
+        assert self.model is not None, 'Build model before training'
+        return self.model.fit(self.x_train, self.y_train, epochs=epochs,
+                              callbacks=[
+                                  tf.keras.callbacks.LearningRateScheduler(lambda epoch, lr: lr * 0.999),
+                                  tf.keras.callbacks.EarlyStopping(monitor='sparse_categorical_accuracy', patience=10)
+                              ])
 
     def evaluate(self):
-        assert self.model is not None
-        self.model.evaluate(self.x_test, self.y_test)
+        assert self.model is not None, 'Build model before evaluating'
+        return self.model.evaluate(self.x_test, self.y_test)
