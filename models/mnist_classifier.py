@@ -58,7 +58,7 @@ class MNISTClassifier:
         # weight_creator = DenseLinearWeightCreator(initial_weight_initializer='glorot_normal',
         #                                           projection_matrix_initializer='glorot_normal')
         weight_creator = SquaredTermsWeightCreator(initial_weight_initializer=initializer,
-                                                   projection_matrix_initializer=initializer)
+                                                   projection_matrix_initializer='random_normal')
         # weight_creator = SparseLinearWeightCreator(initial_weight_initializer='glorot_uniform')
 
         self.model = tf.keras.models.Sequential([
