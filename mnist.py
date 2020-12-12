@@ -10,7 +10,7 @@ epochs = 100
 intrinsic_dims = np.linspace(100, 1000, 10, dtype=int)
 initializers = ['he_normal']
 lrs = [0.001]
-model_types = ['linear', 'power']
+model_types = ['rff']
 
 
 def run_model(model_type, epochs, initializer, lr):
@@ -27,7 +27,7 @@ def run_model(model_type, epochs, initializer, lr):
     elif model_type == 'rff':
         weight_creator = RFFWeightCreator(initial_weight_initializer=initializer,
                                           projection_matrix_initializer='random_normal',
-                                          frequency_samples=intrinsic_dim*0.5,
+                                          frequency_samples=intrinsic_dim // 2,
                                           frequency_sample_std=1,
                                           frequency_sample_mean=0)
     else:

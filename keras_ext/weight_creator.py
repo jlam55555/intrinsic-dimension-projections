@@ -99,10 +99,14 @@ class SquaredTermsWeightCreator(WeightCreator):
 
     def __init__(self,
                  initial_weight_initializer: tf.initializers.Initializer = tf.initializers.RandomNormal(),
-                 projection_matrix_initializer: tf.initializers.Initializer = tf.initializers.RandomNormal()):
+                 projection_matrix_initializer: tf.initializers.Initializer = tf.initializers.RandomNormal(),
+                 squared_terms_coefficient: float = 0.1,
+                 cubed_terms_coefficient: float = 0.01):
         super().__init__(initial_weight_initializer)
         self.initial_weight_initializer = tf.initializers.get(initial_weight_initializer)
         self.projection_matrix_initializer = tf.initializers.get(projection_matrix_initializer)
+        self.squared_terms_coefficient = squared_terms_coefficient
+        self.cubed_terms_coefficient = cubed_terms_coefficient
 
     def _create_weight_offset(self,
                               output_shape: tf.TensorShape,
@@ -118,8 +122,8 @@ class SquaredTermsWeightCreator(WeightCreator):
         projection_matrix = tf.Variable(
             tf.concat((
                 self.projection_matrix_initializer(shape=(intrinsic_weights.size, total_output_dim)),
-                0.1 * self.projection_matrix_initializer(shape=(intrinsic_weights.size, total_output_dim)),
-                0.01 * self.projection_matrix_initializer(shape=(intrinsic_weights.size, total_output_dim)),
+                self.squared_terms_coefficient * self.projection_matrix_initializer(shape=(intrinsic_weights.size, total_output_dim)),
+                self.cubed_terms_coefficient * self.projection_matrix_initializer(shape=(intrinsic_weights.size, total_output_dim)),
             ), axis=0),
             dtype=dtype,
             trainable=False,

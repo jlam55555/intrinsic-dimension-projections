@@ -12,7 +12,7 @@ import tensorflow as tf
 class IntrinsicWeights:
     """Set of (trainable) intrinsic weights that get projected onto the weight offsets"""
 
-    def __init__(self, size, initializer=tf.initializers.RandomNormal()):
+    def __init__(self, size: int, initializer=tf.initializers.RandomNormal()):
         """Creates a set of intrinsic weights; shape is irrelevant, for simplicity use column vector"""
         initializer = tf.initializers.get(initializer)
         self.weights = tf.Variable(initializer(shape=(1, size)),
