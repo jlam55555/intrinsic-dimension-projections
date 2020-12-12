@@ -6,11 +6,15 @@ import multiprocessing as mp
 import numpy as np
 import pickle
 
+import tensorflow as tf
+gpus = tf.config.experimental.list_physical_devices('GPU')
+tf.config.experimental.set_memory_growth(gpus[0], True)
+
 epochs = 100
 intrinsic_dims = np.linspace(100, 1000, 10, dtype=int)
 initializers = ['he_normal']
 lrs = [0.001]
-model_types = ['rff']
+model_types = ['linear', 'power']
 
 
 def run_model(model_type, epochs, initializer, lr):
@@ -64,7 +68,7 @@ def run_model(model_type, epochs, initializer, lr):
         'summary': summary_str,
         'timestamp': timestamp
     }
-    out_filename = f'runs/mnist_{model_type}_{intrinsic_dim}_{timestamp}.pkl'
+    out_filename = f'runs/mnist_normalized_{model_type}_{intrinsic_dim}_{timestamp}.pkl'
     with open(out_filename, 'wb') as out_handle:
         pickle.dump(out_obj, out_handle)
 
