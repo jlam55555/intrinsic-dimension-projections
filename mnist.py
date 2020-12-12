@@ -8,7 +8,8 @@ import pickle
 
 import tensorflow as tf
 gpus = tf.config.experimental.list_physical_devices('GPU')
-tf.config.experimental.set_memory_growth(gpus[0], True)
+if gpus:
+    tf.config.experimental.set_memory_growth(gpus[0], True)
 
 epochs = 100
 intrinsic_dims = np.linspace(100, 1000, 10, dtype=int)
