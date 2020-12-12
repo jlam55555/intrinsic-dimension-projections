@@ -3,7 +3,7 @@ import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 
-mnist_files = glob.glob('runs/mnist*.pkl')
+mnist_files = glob.glob('runs/mnist_nonnormalized_p/mnist*.pkl')
 
 results1 = []
 results2 = []
