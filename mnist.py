@@ -56,6 +56,8 @@ def run_model(model_type, epochs, initializer, lr):
         'epochs': epochs,
         'initializer': initializer,
         'lr': lr,
+        'squared_coefficient': weight_creator.squared_terms_coefficient if model_type == 'power' else None,
+        'cubed_coefficient': weight_creator.cubed_terms_coefficient if model_type == 'power' else None,
         'intrinsic_dim': intrinsic_dim,
         'history': hist.history,
         'eval': eval,
