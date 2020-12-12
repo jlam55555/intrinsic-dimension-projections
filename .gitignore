@@ -2,5 +2,4 @@ venv/
 .idea/
 experiments/logs
 **/__pycache__
-runs/*.pkl
 test/
