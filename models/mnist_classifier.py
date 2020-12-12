@@ -16,15 +16,26 @@ class MNISTClassifier:
         (self.x_train, self.y_train), (self.x_test, self.y_test) = tf.keras.datasets.mnist.load_data()
         self.model: tf.keras.models.Model = None
 
-    def build_fc_direct_model(self, layers=2, width=128, lr=0.001, initializer='he_uniform'):
+    def build_fc_direct_model(self, layers=2, width=128, lr=0.001, initializer='he_uniform',
+                              bias_regularizer=l2(1e-3), kernel_regularizer=l2(1e-3)):
         """Simple fully-connected model with ordinary keras layers"""
         self.model = tf.keras.models.Sequential([
             tf.keras.layers.InputLayer(input_shape=(28, 28, 1)),
             tf.keras.layers.Flatten(),
-            *[tf.keras.layers.Dense(width, activation='relu') for _ in range(layers)],
-            tf.keras.layers.Dense(10)
+            *[tf.keras.layers.Dense(width,
+                                    activation='relu',
+                                    kernel_initializer=initializer,
+                                    bias_initializer=initializer,
+                                    bias_regularizer=bias_regularizer,
+                                    kernel_regularizer=kernel_regularizer)
+              for _ in range(layers)],
+            tf.keras.layers.Dense(10,
+                                  kernel_initializer=initializer,
+                                  bias_initializer=initializer,
+                                  kernel_regularizer=kernel_regularizer,
+                                  bias_regularizer=bias_regularizer)
         ])
-        self.model.compile(optimizer=tf.keras.optimizers.Adam(),
+        self.model.compile(optimizer=tf.keras.optimizers.Adam(lr=lr),
                            loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
                            metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])
 
