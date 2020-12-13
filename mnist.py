@@ -12,12 +12,12 @@ gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
     tf.config.experimental.set_memory_growth(gpus[0], True)
 
-epochs = 100
+epochs = 1
 intrinsic_dims = np.linspace(100, 1000, 10, dtype=int)
 initializers = ['he_normal']
 lrs = [0.001]
 model_types = ['power']
-train_proj = False
+train_proj = True
 
 
 def run_model(model_type, epochs, initializer, lr, train_proj: bool = False):
@@ -27,18 +27,21 @@ def run_model(model_type, epochs, initializer, lr, train_proj: bool = False):
 
     if model_type == 'linear':
         weight_creator = DenseLinearWeightCreator(initial_weight_initializer=initializer,
-                                                  projection_matrix_initializer='random_normal')
+                                                  projection_matrix_initializer='random_normal',
+                                                  trainable_proj=train_proj)
     elif model_type == 'power':
         weight_creator = SquaredTermsWeightCreator(initial_weight_initializer=initializer,
                                                    projection_matrix_initializer='random_normal',
                                                    squared_terms_coefficient=1,
-                                                   cubed_terms_coefficient=1)
+                                                   cubed_terms_coefficient=1,
+                                                   trainable_proj=train_proj)
     elif model_type == 'rff':
         weight_creator = RFFWeightCreator(initial_weight_initializer=initializer,
                                           projection_matrix_initializer='random_normal',
                                           frequency_samples=intrinsic_dim // 2,
                                           frequency_sample_std=1,
-                                          frequency_sample_mean=0)
+                                          frequency_sample_mean=0,
+                                          trainable_proj=train_proj)
     else:
         assert False, 'model_type must be one of [\'linear\', \'power\', \'rff\']'
 
@@ -53,10 +56,10 @@ def run_model(model_type, epochs, initializer, lr, train_proj: bool = False):
         for layer in mnist_classifier.model.layers:
             if isinstance(layer, DenseRandomProjectionLayer):
                 projection_matrices_before.append([
-                    layer.trainable_weight1 and layer.trainable_weight1.numpy(),
-                    layer.trainable_weight2 and layer.trainable_weight2.numpy(),
-                    layer.trainable_weight3 and layer.trainable_weight3.numpy(),
-                    layer.trainable_weight4 and layer.trainable_weight4.numpy(),
+                    layer.trainable_weight1.numpy() if layer.trainable_weight1 is not None else None,
+                    layer.trainable_weight2.numpy() if layer.trainable_weight2 is not None else None,
+                    layer.trainable_weight3.numpy() if layer.trainable_weight3 is not None else None,
+                    layer.trainable_weight4.numpy() if layer.trainable_weight4 is not None else None,
                 ])
 
     print(f'epochs: {epochs}; intrinsic_dim: {intrinsic_dim}; initializer: {initializer}; lr: {lr}; type: {model_type}')
@@ -74,11 +77,13 @@ def run_model(model_type, epochs, initializer, lr, train_proj: bool = False):
         for layer in mnist_classifier.model.layers:
             if isinstance(layer, DenseRandomProjectionLayer):
                 projection_matrices_after.append([
-                    layer.trainable_weight1 and layer.trainable_weight1.numpy(),
-                    layer.trainable_weight2 and layer.trainable_weight2.numpy(),
-                    layer.trainable_weight3 and layer.trainable_weight3.numpy(),
-                    layer.trainable_weight4 and layer.trainable_weight4.numpy(),
+                    layer.trainable_weight1.numpy() if layer.trainable_weight1 is not None else None,
+                    layer.trainable_weight2.numpy() if layer.trainable_weight2 is not None else None,
+                    layer.trainable_weight3.numpy() if layer.trainable_weight3 is not None else None,
+                    layer.trainable_weight4.numpy() if layer.trainable_weight4 is not None else None,
                 ])
+
+    print(projection_matrices_before, projection_matrices_after)
 
     # write results to file; write this for every model training to safeguard against OOM error
     # using multiple processes *should* fix this but not sure

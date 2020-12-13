@@ -57,7 +57,6 @@ class DenseRandomProjectionLayer(ProjectionLayer):
                  bias_initializer='zeros',
                  kernel_regularizer=None,
                  bias_regularizer=None,
-                 trainable_proj=False,
                  **kwargs):
         super().__init__(weight_creator, intrinsic_weights, **kwargs)
         self.units = units
@@ -70,7 +69,7 @@ class DenseRandomProjectionLayer(ProjectionLayer):
         self.bias_thunk = self.kernel_thunk = lambda: None
 
         # if training the projection
-        self.trainable_proj = trainable_proj
+        self.trainable_proj = self.weight_creator.trainable_proj
         self.trainable_weight1: tf.Variable = None
         self.trainable_weight2: tf.Variable = None
         self.trainable_weight3: tf.Variable = None
