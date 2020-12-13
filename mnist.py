@@ -62,6 +62,9 @@ def run_model(model_type, epochs, initializer, lr, train_proj: bool = False):
                     layer.trainable_weight4.numpy() if layer.trainable_weight4 is not None else None,
                 ])
 
+    # get untrained weights
+    untrained_intrinsic_weights = intrinsic_weights.weights.numpy()
+
     print(f'epochs: {epochs}; intrinsic_dim: {intrinsic_dim}; initializer: {initializer}; lr: {lr}; type: {model_type}')
     summary_str = ''
     def print_fn(line):
@@ -83,6 +86,7 @@ def run_model(model_type, epochs, initializer, lr, train_proj: bool = False):
                     layer.trainable_weight4.numpy() if layer.trainable_weight4 is not None else None,
                 ])
 
+    # TODO: remove this line; for debugging
     print(projection_matrices_before, projection_matrices_after)
 
     # write results to file; write this for every model training to safeguard against OOM error
@@ -102,7 +106,9 @@ def run_model(model_type, epochs, initializer, lr, train_proj: bool = False):
         'timestamp': timestamp,
         'train_proj': train_proj,
         'projection_before': projection_matrices_before,
-        'projection_after': projection_matrices_after
+        'projection_after': projection_matrices_after,
+        'intrinsic_weights_before': untrained_intrinsic_weights,
+        'intrinsic_weights_after': intrinsic_weights.weights.numpy()
     }
     out_filename = f'runs/mnist_normalized_{model_type}_{intrinsic_dim}_{timestamp}.pkl'
     with open(out_filename, 'wb') as out_handle:
