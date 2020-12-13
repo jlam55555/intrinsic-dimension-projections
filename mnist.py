@@ -12,7 +12,7 @@ gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
     tf.config.experimental.set_memory_growth(gpus[0], True)
 
-epochs = 1
+epochs = 100
 intrinsic_dims = np.linspace(100, 1000, 10, dtype=int)
 initializers = ['he_normal']
 lrs = [0.001]
