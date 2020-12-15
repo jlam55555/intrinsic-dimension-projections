@@ -6,24 +6,29 @@ from datetime import datetime
 import multiprocessing as mp
 import numpy as np
 import pickle
-
+import sys
 import tensorflow as tf
-gpus = tf.config.experimental.list_physical_devices('GPU')
-if gpus:
-    tf.config.experimental.set_memory_growth(gpus[0], True)
 
-epochs = 100
+# import tensorflow as tf
+# gpus = tf.config.experimental.list_physical_devices('GPU')
+# if gpus:
+#     tf.config.experimental.set_memory_growth(gpus[0], True)
+
+epochs = 1
 intrinsic_dims = np.linspace(100, 1000, 10, dtype=int)
 initializers = ['he_normal']
 lrs = [0.001]
 model_types = ['power']
 train_proj = True
 
+# for experimenting with initializers
+P_stddevs = (float(sys.argv[1]), float(sys.argv[2]), float(sys.argv[3]), float(sys.argv[4]))
 
 def run_model(model_type, epochs, initializer, lr, train_proj: bool = False):
     mnist_classifier = MNISTClassifier()
 
-    intrinsic_weights = IntrinsicWeights(size=intrinsic_dim)
+    intrinsic_weights = IntrinsicWeights(size=intrinsic_dim,
+                                         initializer=tf.initializers.RandomNormal(stddev=P_stddevs[3]))
 
     if model_type == 'linear':
         weight_creator = DenseLinearWeightCreator(initial_weight_initializer=initializer,
@@ -31,9 +36,10 @@ def run_model(model_type, epochs, initializer, lr, train_proj: bool = False):
                                                   trainable_proj=train_proj)
     elif model_type == 'power':
         weight_creator = SquaredTermsWeightCreator(initial_weight_initializer=initializer,
-                                                   projection_matrix_initializer='random_normal',
-                                                   squared_terms_coefficient=1,
-                                                   cubed_terms_coefficient=1,
+                                                   projection_matrix_initializer=tf.initializers.RandomNormal(stddev=1),
+                                                   linear_terms_coefficient=P_stddevs[0],
+                                                   squared_terms_coefficient=P_stddevs[1],
+                                                   cubed_terms_coefficient=P_stddevs[2],
                                                    trainable_proj=train_proj)
     elif model_type == 'rff':
         weight_creator = RFFWeightCreator(initial_weight_initializer=initializer,
