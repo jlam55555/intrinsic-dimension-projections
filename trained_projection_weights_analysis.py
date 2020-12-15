@@ -9,7 +9,7 @@ font = {'family': 'cmr10', 'size': 18}
 mpl.rc('font', **font)  # change the default font to Computer Modern Roman
 mpl.rcParams['axes.unicode_minus'] = False  # because cmr10 does not have a Unicode minus sign
 
-files = glob.glob('runs/trainable_proj/mnist_normalized_power_100*.pkl')
+files = glob.glob('runs/trainable_proj/mnist_normalized_power_*.pkl')
 for filename in files:
     with open(filename, 'rb') as file_handle:
         model_dict = pickle.load(file_handle)
