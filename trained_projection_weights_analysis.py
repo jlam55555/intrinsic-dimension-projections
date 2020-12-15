@@ -9,9 +9,9 @@ font = {'family': 'cmr10', 'size': 18}
 mpl.rc('font', **font)  # change the default font to Computer Modern Roman
 mpl.rcParams['axes.unicode_minus'] = False  # because cmr10 does not have a Unicode minus sign
 
-file_handle = open('runs/dists.out', 'w')
+file_handle2 = open('runs/dists.out', 'w')
 
-files = glob.glob('runs/mnist_normalized_power_*.pkl')
+files = glob.glob('runs/trainable_proj/mnist_normalized_power_800*.pkl')
 for filename in files:
     with open(filename, 'rb') as file_handle:
         model_dict = pickle.load(file_handle)
@@ -49,12 +49,12 @@ for filename in files:
     after_flat2 = np.concatenate(after_flat2).flatten()
     after_flat3 = np.concatenate(after_flat3).flatten()
 
-    file_handle.write(f'{intrinsic_dim} {before_flat.std()} {after_flat.std()} {after_flat1.std()} {after_flat2.std()} {after_flat3.std()} {intrinsic_weights_before.std()} {intrinsic_weights_after.std()}')
+    file_handle2.write(f'{intrinsic_dim} {before_flat.std()} {after_flat.std()} {after_flat1.std()} {after_flat2.std()} {after_flat3.std()} {intrinsic_weights_before.std()} {intrinsic_weights_after.std()}')
     print(intrinsic_dim, before_flat.std(), after_flat.std(), after_flat1.std(), after_flat2.std(), after_flat3.std())
     print(intrinsic_weights_before.std(), intrinsic_weights_after.std())
 
-    # if intrinsic_dim not in (100, 500, 1000):
-    continue
+    if intrinsic_dim not in (100, 500, 1000):
+        continue
 
     figsize=(6, 6)
     plt.figure(figsize=figsize)
