@@ -11,6 +11,9 @@ mpl.rcParams['axes.unicode_minus'] = False  # because cmr10 does not have a Unic
 
 # file_handle2 = open('runs/dists.out', 'w')
 
+figsize = (12, 8)
+plt.figure(figsize=figsize)
+
 files = glob.glob('runs/*.pkl')
 for filename in files:
     with open(filename, 'rb') as file_handle:
@@ -55,9 +58,6 @@ for filename in files:
 
     if intrinsic_dim not in (100, 500, 1000):
         continue
-
-    figsize=(12, 8)
-    plt.figure(figsize=figsize)
 
     # plt.subplot(1, 5, 1)
     # plt.hist(after_flat, bins=np.linspace(-0.5, 0.5, 50))
