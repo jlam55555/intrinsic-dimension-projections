@@ -9,7 +9,7 @@ font = {'family': 'cmr10', 'size': 18}
 mpl.rc('font', **font)  # change the default font to Computer Modern Roman
 mpl.rcParams['axes.unicode_minus'] = False  # because cmr10 does not have a Unicode minus sign
 
-# file_handle2 = open('runs/dists.out', 'w')
+file_handle2 = open('runs/dists.out', 'w')
 
 figsize = (12, 8)
 plt.figure(figsize=figsize)
@@ -42,19 +42,24 @@ for filename in files:
         for weight in layer:
             if weight is not None:
                 after_flat.append(weight.flatten())
-                l = int(weight.shape[1]/3)
-                after_flat1.append(weight[:,0:l].flatten())
-                after_flat2.append(weight[:,l:2*l].flatten())
-                after_flat3.append(weight[:,2*l:].flatten())
+                # l = int(weight.shape[1]/3)
+                # after_flat1.append(weight[:,0:l].flatten())
+                # after_flat2.append(weight[:,l:2*l].flatten())
+                # after_flat3.append(weight[:,2*l:].flatten())
+                l = int(weight.shape[0]/3)
+                after_flat1.append(weight[0:l,:].flatten())
+                after_flat2.append(weight[l:2*l,:].flatten())
+                after_flat3.append(weight[2*l:,:].flatten())
 
     after_flat = np.concatenate(after_flat).flatten()
     after_flat1 = np.concatenate(after_flat1).flatten()
     after_flat2 = np.concatenate(after_flat2).flatten()
     after_flat3 = np.concatenate(after_flat3).flatten()
 
-    # file_handle2.write(f'{intrinsic_dim} {before_flat.std()} {after_flat.std()} {after_flat1.std()} {after_flat2.std()} {after_flat3.std()} {intrinsic_weights_before.std()} {intrinsic_weights_after.std()}')
-    # print(intrinsic_dim, before_flat.std(), after_flat.std(), after_flat1.std(), after_flat2.std(), after_flat3.std())
-    # print(intrinsic_weights_before.std(), intrinsic_weights_after.std())
+    file_handle2.write(f'{intrinsic_dim} {before_flat.std()} {after_flat.std()} {after_flat1.std()} {after_flat2.std()} {after_flat3.std()} {intrinsic_weights_before.std()} {intrinsic_weights_after.std()}')
+    file_handle2.flush()
+    print(intrinsic_dim, before_flat.std(), after_flat.std(), after_flat1.std(), after_flat2.std(), after_flat3.std())
+    print(intrinsic_weights_before.std(), intrinsic_weights_after.std())
 
     if intrinsic_dim not in (100, 500, 1000):
         continue
@@ -105,3 +110,5 @@ for filename in files:
 
 plt.tight_layout()
 plt.savefig(f'plots/mnist_pdist.pdf')
+
+file_handle2.close()
