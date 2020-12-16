@@ -34,7 +34,7 @@ def LinReg(X, Y):
 # regular vs. power
 plt.figure(figsize=(8,6))
 mnist_files = glob.glob('runs/mnist_nonnormalized_p_/mnist*.pkl')
-mnist_files2 = glob.glob('runs/many_runs/mnist*.pkl')
+mnist_files2 = glob.glob('runs/initialized/mnist*.pkl')
 results1 = []   # linear dense projection
 results2 = []   # power dense projection
 results3 = []   # rff
@@ -49,21 +49,21 @@ for filename in (mnist_files + mnist_files2):
     else:
         results3.append([model_dict['intrinsic_dim'], model_dict['eval'][1]])
 
-results = np.array(results1)
-# plt.scatter(results[:, 0], results[:, 1], c='b', alpha=0.2, marker='x')
-# b, m = LinReg(1/results[:, 0], results[:, 1])
-# x = np.arange(1, 1000)
-# y = m/x + b
-# plt.plot(x, y, c='b')
-# get means for every intrinsic dimension value
-ids = np.linspace(100, 1000, 10)
-means = np.zeros((10, ))
-stds = np.zeros((10, ))
-for i, id in enumerate(ids):
-    means[i] = np.mean(results[results[:, 0] == id, 1])
-    stds[i] = np.std(results[results[:, 0] == id, 1])
-plt.plot(ids, means, 'b.-')
-plt.errorbar(ids, means, yerr=stds, c='b', capsize=5, elinewidth=1)
+# results = np.array(results1)
+# # plt.scatter(results[:, 0], results[:, 1], c='b', alpha=0.2, marker='x')
+# # b, m = LinReg(1/results[:, 0], results[:, 1])
+# # x = np.arange(1, 1000)
+# # y = m/x + b
+# # plt.plot(x, y, c='b')
+# # get means for every intrinsic dimension value
+# ids = np.linspace(100, 1000, 10)
+# means = np.zeros((10, ))
+# stds = np.zeros((10, ))
+# for i, id in enumerate(ids):
+#     means[i] = np.mean(results[results[:, 0] == id, 1])
+#     stds[i] = np.std(results[results[:, 0] == id, 1])
+# plt.plot(ids, means, 'b.-')
+# plt.errorbar(ids, means, yerr=stds, c='b', capsize=5, elinewidth=1)
 
 results = np.array(results2)
 # b, m = LinReg(1/results[:, 0], results[:, 1])
@@ -79,31 +79,32 @@ for i, id in enumerate(ids):
     means[i] = np.mean(results[results[:, 0] == id, 1])
     stds[i] = np.std(results[results[:, 0] == id, 1])
 plt.plot(ids, means, 'r.-')
-plt.errorbar(ids, means, yerr=stds, c='r', capsize=5, elinewidth=1)
+# plt.errorbar(ids, means, yerr=stds, c='r', capsize=5, elinewidth=1)
 
-results = np.array(results3)
-# b, m = LinReg(1/results[:, 0], results[:, 1])
-# x = np.arange(1, 1000)
-# y = m/x + b
-# plt.plot(x, y, c='k')
-# get means for every intrinsic dimension value
-# plt.scatter(results[:, 0], results[:, 1], c='k', alpha=0.2, marker='x')
-ids = np.linspace(100, 1000, 10)
-means = np.zeros((10, ))
-for i, id in enumerate(ids):
-    means[i] = np.mean(results[results[:, 0] == id, 1])
-    stds[i] = np.std(results[results[:, 0] == id, 1])
-plt.plot(ids, means, 'k.-')
-plt.errorbar(ids, means, yerr=stds, c='k', capsize=5, elinewidth=1)
+# results = np.array(results3)
+# # b, m = LinReg(1/results[:, 0], results[:, 1])
+# # x = np.arange(1, 1000)
+# # y = m/x + b
+# # plt.plot(x, y, c='k')
+# # get means for every intrinsic dimension value
+# # plt.scatter(results[:, 0], results[:, 1], c='k', alpha=0.2, marker='x')
+# ids = np.linspace(100, 1000, 10)
+# means = np.zeros((10, ))
+# for i, id in enumerate(ids):
+#     means[i] = np.mean(results[results[:, 0] == id, 1])
+#     stds[i] = np.std(results[results[:, 0] == id, 1])
+# plt.plot(ids, means, 'k.-')
+# plt.errorbar(ids, means, yerr=stds, c='k', capsize=5, elinewidth=1)
 
 plt.ylim([0.3, 0.9])
 plt.xlim(0, 1025)
 plt.ylabel('Accuracy')
 plt.xlabel('Intrinsic dimension')
-plt.legend(['Linear', 'Power', 'RFF'], loc=4)
+# plt.legend(['Linear', 'Power', 'RFF'], loc=4)
 plt.grid()
 
-plt.savefig('plots/many.pdf')
+plt.show()
+# plt.savefig('plots/many.pdf')
 
 # power w/ different coefficients
 # mnist_files = glob.glob('runs/power_coefficients/mnist*.pkl')
