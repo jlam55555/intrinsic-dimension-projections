@@ -32,45 +32,29 @@ def LinReg(X, Y):
     return np.linalg.pinv(X.T @ X) @ X.T @ Y
 
 # regular vs. power
-# plt.figure(figsize=(8,6))
-# mnist_files = glob.glob('runs/many_runs/mnist*.pkl')
-# mnist_files2 = glob.glob('runs/_initialized/mnist*.pkl')
-# results1 = []   # linear dense projection
-# results2 = []   # power dense projection
-# results3 = []   # rff
-# for filename in (mnist_files + mnist_files2):
-#     with open(filename, 'rb') as file_handle:
-#         model_dict = pickle.load(file_handle)
-#
-#     if model_dict['model_type'] == 'linear':
-#         results1.append([model_dict['intrinsic_dim'], model_dict['eval'][1]])
-#     elif model_dict['model_type'] == 'power':
-#         results2.append([model_dict['intrinsic_dim'], model_dict['eval'][1]])
-#     else:
-#         results3.append([model_dict['intrinsic_dim'], model_dict['eval'][1]])
-#
-# # results = np.array(results1)
-# # # plt.scatter(results[:, 0], results[:, 1], c='b', alpha=0.2, marker='x')
-# # # b, m = LinReg(1/results[:, 0], results[:, 1])
-# # # x = np.arange(1, 1000)
-# # # y = m/x + b
-# # # plt.plot(x, y, c='b')
-# # # get means for every intrinsic dimension value
-# # ids = np.linspace(100, 1000, 10)
-# # means = np.zeros((10, ))
-# # stds = np.zeros((10, ))
-# # for i, id in enumerate(ids):
-# #     means[i] = np.mean(results[results[:, 0] == id, 1])
-# #     stds[i] = np.std(results[results[:, 0] == id, 1])
-# # plt.plot(ids, means, 'b.-')
-# # plt.errorbar(ids, means, yerr=stds, c='b', capsize=5, elinewidth=1)
-#
-# results = np.array(results2)
+plt.figure(figsize=(8,6))
+mnist_files = glob.glob('runs/initialized2/mnist*.pkl')
+mnist_files2 = glob.glob('runs/_initialized2/mnist*.pkl')
+results1 = []   # linear dense projection
+results2 = []   # power dense projection
+results3 = []   # rff
+for filename in (mnist_files + mnist_files2):
+    with open(filename, 'rb') as file_handle:
+        model_dict = pickle.load(file_handle)
+
+    if model_dict['model_type'] == 'linear':
+        results1.append([model_dict['intrinsic_dim'], model_dict['eval'][1]])
+    elif model_dict['model_type'] == 'power':
+        results2.append([model_dict['intrinsic_dim'], model_dict['eval'][1]])
+    else:
+        results3.append([model_dict['intrinsic_dim'], model_dict['eval'][1]])
+
+# results = np.array(results1)
+# # plt.scatter(results[:, 0], results[:, 1], c='b', alpha=0.2, marker='x')
 # # b, m = LinReg(1/results[:, 0], results[:, 1])
 # # x = np.arange(1, 1000)
 # # y = m/x + b
-# # plt.plot(x, y, c='r')
-# # plt.scatter(results[:, 0], results[:, 1], c='r', alpha=0.2, marker='x')
+# # plt.plot(x, y, c='b')
 # # get means for every intrinsic dimension value
 # ids = np.linspace(100, 1000, 10)
 # means = np.zeros((10, ))
@@ -78,67 +62,85 @@ def LinReg(X, Y):
 # for i, id in enumerate(ids):
 #     means[i] = np.mean(results[results[:, 0] == id, 1])
 #     stds[i] = np.std(results[results[:, 0] == id, 1])
-# plt.plot(ids, means, 'r.-')
-# # plt.errorbar(ids, means, yerr=stds, c='r', capsize=5, elinewidth=1)
-#
-# # results = np.array(results3)
-# # # b, m = LinReg(1/results[:, 0], results[:, 1])
-# # # x = np.arange(1, 1000)
-# # # y = m/x + b
-# # # plt.plot(x, y, c='k')
-# # # get means for every intrinsic dimension value
-# # # plt.scatter(results[:, 0], results[:, 1], c='k', alpha=0.2, marker='x')
-# # ids = np.linspace(100, 1000, 10)
-# # means = np.zeros((10, ))
-# # for i, id in enumerate(ids):
-# #     means[i] = np.mean(results[results[:, 0] == id, 1])
-# #     stds[i] = np.std(results[results[:, 0] == id, 1])
-# # plt.plot(ids, means, 'k.-')
-# # plt.errorbar(ids, means, yerr=stds, c='k', capsize=5, elinewidth=1)
-#
-# plt.ylim([0.3, 0.9])
-# plt.xlim(0, 1025)
-# plt.ylabel('Accuracy')
-# plt.xlabel('Intrinsic dimension')
-# # plt.legend(['Linear', 'Power', 'RFF'], loc=4)
-# plt.grid()
-#
-# plt.show()
-# # plt.savefig('plots/many.pdf')
+# plt.plot(ids, means, 'b.-')
+# plt.errorbar(ids, means, yerr=stds, c='b', capsize=5, elinewidth=1)
 
-# power w/ different coefficients
-mnist_files = glob.glob('runs/power_coefficients/mnist*.pkl')
-results = []
-for filename in mnist_files:
-    with open(filename, 'rb') as file_handle:
-        model_dict = pickle.load(file_handle)
+results = np.array(results2)
+# b, m = LinReg(1/results[:, 0], results[:, 1])
+# x = np.arange(1, 1000)
+# y = m/x + b
+# plt.plot(x, y, c='r')
+# plt.scatter(results[:, 0], results[:, 1], c='r', alpha=0.2, marker='x')
+# get means for every intrinsic dimension value
+ids = np.linspace(100, 1000, 10)
+means = np.zeros((10, ))
+stds = np.zeros((10, ))
+for i, id in enumerate(ids):
+    means[i] = np.mean(results[results[:, 0] == id, 1])
+    stds[i] = np.std(results[results[:, 0] == id, 1])
+plt.plot(ids, means, 'r.-')
+# plt.errorbar(ids, means, yerr=stds, c='r', capsize=5, elinewidth=1)
 
-    results.append([model_dict['squared_coefficient'] if 'squared_coefficient' in model_dict else 0.1,
-                    model_dict['cubed_coefficient'] if 'cubed_coefficient' in model_dict else 0.01,
-                    model_dict['intrinsic_dim'],
-                    model_dict['eval'][1]])
+# results = np.array(results3)
+# # b, m = LinReg(1/results[:, 0], results[:, 1])
+# # x = np.arange(1, 1000)
+# # y = m/x + b
+# # plt.plot(x, y, c='k')
+# # get means for every intrinsic dimension value
+# # plt.scatter(results[:, 0], results[:, 1], c='k', alpha=0.2, marker='x')
+# ids = np.linspace(100, 1000, 10)
+# means = np.zeros((10, ))
+# for i, id in enumerate(ids):
+#     means[i] = np.mean(results[results[:, 0] == id, 1])
+#     stds[i] = np.std(results[results[:, 0] == id, 1])
+# plt.plot(ids, means, 'k.-')
+# plt.errorbar(ids, means, yerr=stds, c='k', capsize=5, elinewidth=1)
 
-results = np.array(results)
-experiments = [
-    (1, 1),
-    (0.5, 0.25),
-    (0.1, 0.01),
-    (0.01, 0.001),
-    (1, 0),
-    (0.5, 0),
-    (0.1, 0)
-]
-plt.figure(figsize=(8, 6))
-for lambda_s, lambda_c in experiments:
-    rows = (results[:, 0] == lambda_s) & (results[:, 1] == lambda_c)
-    ids = np.argsort(results[rows, 2])
-    accuracies = results[rows, 3][ids]
-    plt.plot(results[rows, 2][ids], accuracies, '.-')
+plt.ylim([0.3, 0.9])
+plt.xlim(0, 1025)
 plt.ylabel('Accuracy')
 plt.xlabel('Intrinsic dimension')
-plt.legend([f'$\lambda_s: {lambda_s}; \lambda_c: {lambda_c}$' for lambda_s, lambda_c in experiments],
-           fontsize='x-small', loc=4)
-plt.ylim([0.3, 0.9])
-plt.xlim([0, 1025])
+# plt.legend(['Linear', 'Power', 'RFF'], loc=4)
 plt.grid()
-plt.show()
+
+# plt.show()
+plt.savefig('plots/mnist_initialized.pdf')
+
+# # power w/ different coefficients
+# mnist_files = glob.glob('runs/power_coefficients/mnist*.pkl')
+# results = []
+# for filename in mnist_files:
+#     with open(filename, 'rb') as file_handle:
+#         model_dict = pickle.load(file_handle)
+#
+#     results.append([model_dict['squared_coefficient'] if 'squared_coefficient' in model_dict else 0.1,
+#                     model_dict['cubed_coefficient'] if 'cubed_coefficient' in model_dict else 0.01,
+#                     model_dict['intrinsic_dim'],
+#                     model_dict['eval'][1]])
+#
+# results = np.array(results)
+# experiments = [
+#     (1, 1),
+#     (0.5, 0.25),
+#     (0.1, 0.01),
+#     (0.01, 0.001),
+#     (1, 0),
+#     (0.5, 0),
+#     (0.1, 0)
+# ]
+# plt.figure(figsize=(8, 6))
+# for lambda_s, lambda_c in experiments:
+#     rows = (results[:, 0] == lambda_s) & (results[:, 1] == lambda_c)
+#     ids = np.argsort(results[rows, 2])
+#     accuracies = results[rows, 3][ids]
+#     plt.plot(results[rows, 2][ids], accuracies, '.-')
+# plt.ylabel('Accuracy')
+# plt.xlabel('Intrinsic dimension')
+# plt.legend([f'$\lambda_s: {lambda_s}; \lambda_c: {lambda_c}$' for lambda_s, lambda_c in experiments],
+#            fontsize='x-small', loc=4)
+# plt.ylim([0.3, 0.9])
+# plt.xlim([0, 1025])
+# plt.grid()
+# # plt.show()
+#
+# plt.savefig('plots/power_coefficients.pdf')
