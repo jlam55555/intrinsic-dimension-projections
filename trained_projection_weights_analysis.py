@@ -9,9 +9,9 @@ font = {'family': 'cmr10', 'size': 18}
 mpl.rc('font', **font)  # change the default font to Computer Modern Roman
 mpl.rcParams['axes.unicode_minus'] = False  # because cmr10 does not have a Unicode minus sign
 
-file_handle2 = open('runs/dists.out', 'w')
+# file_handle2 = open('runs/dists.out', 'w')
 
-files = glob.glob('runs/trainable_proj/mnist_normalized_power_800*.pkl')
+files = glob.glob('runs/*.pkl')
 for filename in files:
     with open(filename, 'rb') as file_handle:
         model_dict = pickle.load(file_handle)
@@ -49,54 +49,57 @@ for filename in files:
     after_flat2 = np.concatenate(after_flat2).flatten()
     after_flat3 = np.concatenate(after_flat3).flatten()
 
-    file_handle2.write(f'{intrinsic_dim} {before_flat.std()} {after_flat.std()} {after_flat1.std()} {after_flat2.std()} {after_flat3.std()} {intrinsic_weights_before.std()} {intrinsic_weights_after.std()}')
-    print(intrinsic_dim, before_flat.std(), after_flat.std(), after_flat1.std(), after_flat2.std(), after_flat3.std())
-    print(intrinsic_weights_before.std(), intrinsic_weights_after.std())
+    # file_handle2.write(f'{intrinsic_dim} {before_flat.std()} {after_flat.std()} {after_flat1.std()} {after_flat2.std()} {after_flat3.std()} {intrinsic_weights_before.std()} {intrinsic_weights_after.std()}')
+    # print(intrinsic_dim, before_flat.std(), after_flat.std(), after_flat1.std(), after_flat2.std(), after_flat3.std())
+    # print(intrinsic_weights_before.std(), intrinsic_weights_after.std())
 
     if intrinsic_dim not in (100, 500, 1000):
         continue
 
-    figsize=(6, 6)
+    figsize=(18, 3)
     plt.figure(figsize=figsize)
+
+    plt.subplot(1, 6, 1)
     plt.hist(after_flat, bins=np.linspace(-0.5, 0.5, 50))
     plt.xlabel('$\\theta_d$')
     plt.ylabel('Frequency')
     # plt.grid()
-    plt.savefig(f'plots/mnist_{intrinsic_dim}_P_before.pdf')
+    # plt.savefig(f'plots/mnist_{intrinsic_dim}_P_before.pdf')
 
-    plt.figure(figsize=figsize)
+    plt.subplot(1, 6, 2)
     plt.hist(after_flat1, bins=np.linspace(-0.5, 0.5, 50))
     plt.xlabel('$\\theta_d$')
     plt.ylabel('Frequency')
     # plt.grid()
-    plt.savefig(f'plots/mnist_{intrinsic_dim}_P_lin.pdf')
+    # plt.savefig(f'plots/mnist_{intrinsic_dim}_P_lin.pdf')
 
-    plt.figure(figsize=figsize)
+    plt.subplot(1, 6, 3)
     plt.hist(after_flat2, bins=np.linspace(-0.5, 0.5, 50))
     plt.xlabel('$\\theta_d$')
     plt.ylabel('Frequency')
     # plt.grid()
-    plt.savefig(f'plots/mnist_{intrinsic_dim}_P_squ.pdf')
+    # plt.savefig(f'plots/mnist_{intrinsic_dim}_P_squ.pdf')
 
-    plt.figure(figsize=figsize)
+    plt.subplot(1, 6, 4)
     plt.hist(after_flat3, bins=np.linspace(-0.5, 0.5, 50))
     plt.xlabel('$\\theta_d$')
     plt.ylabel('Frequency')
     # plt.grid()
-    plt.savefig(f'plots/mnist_{intrinsic_dim}_P_cub.pdf')
+    # plt.savefig(f'plots/mnist_{intrinsic_dim}_P_cub.pdf')
 
-    plt.figure(figsize=figsize)
+    plt.subplot(1, 6, 5)
     plt.hist(intrinsic_weights_before.flatten(), bins=np.linspace(-0.25, 0.25, 50))
     plt.xlabel('$\\theta_d$')
     plt.ylabel('Frequency')
     # plt.grid()
-    plt.savefig(f'plots/mnist_{intrinsic_dim}_int_before.pdf')
+    # plt.savefig(f'plots/mnist_{intrinsic_dim}_int_before.pdf')
 
-    plt.figure(figsize=figsize)
+    plt.subplot(1, 6, 6)
     plt.hist(intrinsic_weights_after.flatten(), bins=np.linspace(-0.025, 0.025, 50))
     plt.xlabel('$\\theta_d$')
     plt.ylabel('Frequency')
     # plt.grid()
-    plt.savefig(f'plots/mnist_{intrinsic_dim}_int_after.pdf')
+    # plt.savefig(f'plots/mnist_{intrinsic_dim}_int_after.pdf')
 
-file_handle.close()
+    plt.tight_layout()
+    plt.savefig(f'plots/mnist_pdist_{intrinsic_dim}.pdf')
