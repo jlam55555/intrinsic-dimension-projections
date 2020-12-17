@@ -5,4 +5,3 @@ experiments/logs
 test/
 
 # these files are too large for github; will be hosted elsewhere
-runs/trainable_proj
