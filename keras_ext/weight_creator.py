@@ -12,11 +12,6 @@ theta_D = theta_0 + f(theta_d)
 
 To make theta_d trainable (to make it part of the model graph), return a function to be called in a layer's call()
 method so that the operation is not immediately evaluated.
-
-TODO: things to experiment with:
-    - implement sparse/fastfood as well? (only improves performance, not compressibility)
-    - same intrinsic weights for all layers in model?
-    - trainable projection method? How can we do this while keeping parameterization small?
 """
 import tensorflow as tf
 
@@ -66,10 +61,12 @@ class DenseLinearWeightCreator(WeightCreator):
 
     def __init__(self,
                  initial_weight_initializer: tf.initializers.Initializer = tf.initializers.RandomNormal(),
-                 projection_matrix_initializer: tf.initializers.Initializer = tf.initializers.RandomNormal()):
+                 projection_matrix_initializer: tf.initializers.Initializer = tf.initializers.RandomNormal(),
+                 normalize_p: bool = False):
         super().__init__(initial_weight_initializer)
         self.initial_weight_initializer = tf.initializers.get(initial_weight_initializer)
         self.projection_matrix_initializer = tf.initializers.get(projection_matrix_initializer)
+        self.normalize_p = normalize_p
 
     def _create_weight_offset(self,
                               output_shape: tf.TensorShape,
@@ -88,7 +85,8 @@ class DenseLinearWeightCreator(WeightCreator):
                                         trainable=False,
                                         name=f'{name}_projector')
 
-        projection_matrix = tf.divide(projection_matrix, tf.reduce_sum(projection_matrix, axis=1)[:, tf.newaxis])
+        if self.normalize_p:
+            projection_matrix = tf.divide(projection_matrix, tf.reduce_sum(projection_matrix, axis=1)[:, tf.newaxis])
 
         # return thunk that calculates the projection when called
         return tf.function(lambda: tf.reshape(intrinsic_weights @ projection_matrix,
@@ -97,18 +95,23 @@ class DenseLinearWeightCreator(WeightCreator):
 
 
 class SquaredTermsWeightCreator(WeightCreator):
-    """Generates weights using a dense random linear projection and concats squared terms"""
+    """Generates weights using a dense random linear projection and concats squared, cubed terms
+
+    We originally only had squared terms, and haven't updated the name since
+    """
 
     def __init__(self,
                  initial_weight_initializer: tf.initializers.Initializer = tf.initializers.RandomNormal(),
                  projection_matrix_initializer: tf.initializers.Initializer = tf.initializers.RandomNormal(),
                  squared_terms_coefficient: float = 0.1,
-                 cubed_terms_coefficient: float = 0.01):
+                 cubed_terms_coefficient: float = 0.01,
+                 normalize_p: bool = False):
         super().__init__(initial_weight_initializer)
         self.initial_weight_initializer = tf.initializers.get(initial_weight_initializer)
         self.projection_matrix_initializer = tf.initializers.get(projection_matrix_initializer)
         self.squared_terms_coefficient = squared_terms_coefficient
         self.cubed_terms_coefficient = cubed_terms_coefficient
+        self.normalize_p = False
 
     def _create_weight_offset(self,
                               output_shape: tf.TensorShape,
@@ -131,7 +134,8 @@ class SquaredTermsWeightCreator(WeightCreator):
             trainable=False,
             name=f'{name}_projector')
 
-        projection_matrix = tf.divide(projection_matrix, tf.reduce_sum(projection_matrix, axis=1)[:, tf.newaxis])
+        if self.normalize_p:
+            projection_matrix = tf.divide(projection_matrix, tf.reduce_sum(projection_matrix, axis=1)[:, tf.newaxis])
 
         # return thunk that calculates the projection when called
         return tf.function(lambda: tf.reshape(tf.concat((intrinsic_weights.weights,
@@ -151,13 +155,15 @@ class RFFWeightCreator(WeightCreator):
                  projection_matrix_initializer: tf.initializers.Initializer = 'glorot_normal',
                  frequency_samples: int = 50,
                  frequency_sample_mean: float = 0,
-                 frequency_sample_std: float = 1):
+                 frequency_sample_std: float = 1,
+                 normalize_p: bool = False):
         super().__init__(initial_weight_initializer)
         self.initial_weight_initializer = tf.initializers.get(initial_weight_initializer)
         self.projection_matrix_initializer = tf.initializers.get(projection_matrix_initializer)
         self.frequency_samples = frequency_samples
         self.frequency_sample_mean = frequency_sample_mean
         self.frequency_sample_std = frequency_sample_std
+        self.normalize_p = normalize_p
 
     def _create_weight_offset(self,
                               output_shape: tf.TensorShape,
@@ -167,7 +173,6 @@ class RFFWeightCreator(WeightCreator):
         """Create RFF projection"""
 
         # RFF projection: multiply by these random frequencies before applying sinusoids
-        # TODO: experiment with this initializer
         rff_initializer = tf.initializers.RandomNormal(mean=self.frequency_sample_mean,
                                                        stddev=self.frequency_sample_std)
         # rff_initializer = tf.initializers.RandomUniform(minval=0, maxval=1)
@@ -186,7 +191,8 @@ class RFFWeightCreator(WeightCreator):
                                         trainable=False,
                                         name=f'{name}_projector')
 
-        projection_matrix = tf.divide(projection_matrix, tf.reduce_sum(projection_matrix, axis=1)[:, tf.newaxis])
+        if self.normalize_p:
+            projection_matrix = tf.divide(projection_matrix, tf.reduce_sum(projection_matrix, axis=1)[:, tf.newaxis])
 
         # thunk to perform calculation
         @tf.function

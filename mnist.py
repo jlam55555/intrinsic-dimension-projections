@@ -6,6 +6,7 @@ import multiprocessing as mp
 import numpy as np
 import pickle
 
+# need this for Richard's GPU: may need to disable it if this prevents the model from running on the GPU
 import tensorflow as tf
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
@@ -16,6 +17,7 @@ intrinsic_dims = np.linspace(100, 1000, 10, dtype=int)
 initializers = ['he_normal']
 lrs = [0.001]
 model_types = ['linear', 'power']
+normalize_p = False
 
 
 def run_model(model_type, epochs, initializer, lr):
@@ -25,18 +27,21 @@ def run_model(model_type, epochs, initializer, lr):
 
     if model_type == 'linear':
         weight_creator = DenseLinearWeightCreator(initial_weight_initializer=initializer,
-                                                  projection_matrix_initializer='random_normal')
+                                                  projection_matrix_initializer='random_normal',
+                                                  normalize_p=normalize_p)
     elif model_type == 'power':
         weight_creator = SquaredTermsWeightCreator(initial_weight_initializer=initializer,
                                                    projection_matrix_initializer='random_normal',
                                                    squared_terms_coefficient=0.1,
-                                                   cubed_terms_coefficient=0.01)
+                                                   cubed_terms_coefficient=0.01,
+                                                   normalize_p=normalize_p)
     elif model_type == 'rff':
         weight_creator = RFFWeightCreator(initial_weight_initializer=initializer,
                                           projection_matrix_initializer='random_normal',
                                           frequency_samples=intrinsic_dim // 2,
                                           frequency_sample_std=1,
-                                          frequency_sample_mean=0)
+                                          frequency_sample_mean=0,
+                                          normalize_p=normalize_p)
     else:
         assert False, 'model_type must be one of [\'linear\', \'power\', \'rff\']'
 

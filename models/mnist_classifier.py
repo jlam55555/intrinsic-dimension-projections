@@ -6,8 +6,7 @@ from tensorflow.python.keras.regularizers import l2
 
 from keras_ext.intrinsic_weights import IntrinsicWeights
 from keras_ext.projection_layer import DenseRandomProjectionLayer
-from keras_ext.weight_creator import DenseLinearWeightCreator, SquaredTermsWeightCreator, SparseLinearWeightCreator, \
-    WeightCreator
+from keras_ext.weight_creator import WeightCreator
 
 
 class MNISTClassifier:
@@ -99,7 +98,8 @@ class MNISTClassifier:
                            metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])
 
     def build_cnn_projection_model(self):
-        pass
+        # not implemented yet; haven't implemented batchnorm
+        raise NotImplementedError
 
     def train(self, epochs=100):
         assert self.model is not None, 'Build model before training'

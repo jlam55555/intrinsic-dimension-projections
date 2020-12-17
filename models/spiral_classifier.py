@@ -67,10 +67,6 @@ class SpiralClassifier:
                                              initializer='glorot_normal')
         weight_creator = DenseLinearWeightCreator(initial_weight_initializer='glorot_uniform',
                                                   projection_matrix_initializer='glorot_uniform')
-        # weight_creator = RFFWeightCreator(frequency_samples=2*intrinsic_dim,
-        #                                   frequency_sample_std=2**-3)
-        # weight_creator = SquaredTermsWeightCreator(initial_weight_initializer='glorot_uniform',
-        #                                            projection_matrix_initializer='glorot_uniform')
 
         model = tf.keras.models.Sequential([
             tf.keras.layers.Input(shape=(2,)),
