@@ -1,23 +1,30 @@
 # intrinsic-dimension-projections
 Jonathan Lam & Richard Lee
 
-Based on [this paper][1] and [its associated codebase][2].
+See [the paper][3] and [the presentation][4] associated with this research.
 
-### General goals
-- Apply other projection types (other than random linear mappings); in particular, try random fourier features (RFF)
+Based on ["Measuring the intrinsic dimension of objective landscapes"][1] and [its associated codebase][2].
 
-### Completed goals
+### Repository contents
+- `keras_ext`: main TF2/keras low-level architectural files (projection implementation)
+- `models`: model architectures
+- `plots`: sample plots used in report (scripts to generate these plots are not included)
+- `runs`: sample pickled runs (not a complete list of models used in the report)
+- `scripts`: scripts to automate model building and training
+
+### Usage
+The primary model for training was MNIST, and the training loop is in [scripts/mnist.py][5]. There, you can adjust the model hyperparameters:
+- `epochs`: maximum number of epochs before termination (ignoring early stopping)
+- `intrinsic_dims`: iterable of intrinsic dimension sizes to train
+- `initializers`: initializers for the initial weight matrices theta_0
+- `lrs`: set of learning rates to train with
+- `model_types`: list of model types to train; can choose from "linear", "power", and "rff"
+- `normalize_p`: whether to normalize the output basis vectors in the projection matrix
+
+### General project goals
+- Apply other projection types (other than random linear mappings); in particular, try random fourier features (RFF) and power terms
 - Rewrite/upgrade/modernize to Python3/TF2 (e.g., type hinting for better IDE support, do more linting)
 - Include better documentation/explanations of terms than original code
-
-### TODO
-- Implement Conv2D, DepthwiseConv2D (maybe? for MobileNet architecture)
-- Implement RFF projection
-- Write report
-- Experiment with training epochs vs. intrinsic dimension (can this be related to double descent paper?)
-- Experiment with initialization (glorot_uniform seems to work well) and regularization methods
-- Experiment with different intrinsic weights for different layers?
-- Implement slightly-modified for inference? (i.e., hardcode the weights matrix so it doesn't have to be recalculated each time)
 
 ### Style guide
 Placing a little bit of extra emphasis here because the codebase from the previous project was a little hard to decipher:
@@ -29,3 +36,6 @@ Placing a little bit of extra emphasis here because the codebase from the previo
 
 [1]: https://arxiv.org/abs/1804.08838
 [2]: https://github.com/uber-research/intrinsic-dimension
+[3]: http://files.lambdalambda.ninja/reports/20-21_fall/ece472_intrinsic_dimension_projections.pdf
+[4]: http://files.lambdalambda.ninja/reports/20-21_fall/ece472_intrinsic_dimension_projections_presentation.pdf
+[5]: ./scripts/mnist.py
