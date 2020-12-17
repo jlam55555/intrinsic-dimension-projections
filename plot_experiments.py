@@ -20,35 +20,35 @@ font = {'family': 'cmr10', 'size': 18}
 mpl.rc('font', **font)  # change the default font to Computer Modern Roman
 mpl.rcParams['axes.unicode_minus'] = False  # because cmr10 does not have a Unicode minus sign
 
-# assumes X, Y are Nx1, Y is Nx1
-def LinReg(X, Y):
-    if X.ndim == 1:
-        X = X[:, np.newaxis]
-    if Y.ndim == 1:
-        Y = Y[:, np.newaxis]
-    print(X.shape, Y.shape)
-    # augment X with set of 1's
-    X = np.concatenate((np.ones_like(X), X), axis=1)
-    return np.linalg.pinv(X.T @ X) @ X.T @ Y
-
-# regular vs. power
-plt.figure(figsize=(8,6))
-mnist_files = glob.glob('runs/initialized2/mnist*.pkl')
-mnist_files2 = glob.glob('runs/_initialized2/mnist*.pkl')
-results1 = []   # linear dense projection
-results2 = []   # power dense projection
-results3 = []   # rff
-for filename in (mnist_files + mnist_files2):
-    with open(filename, 'rb') as file_handle:
-        model_dict = pickle.load(file_handle)
-
-    if model_dict['model_type'] == 'linear':
-        results1.append([model_dict['intrinsic_dim'], model_dict['eval'][1]])
-    elif model_dict['model_type'] == 'power':
-        results2.append([model_dict['intrinsic_dim'], model_dict['eval'][1]])
-    else:
-        results3.append([model_dict['intrinsic_dim'], model_dict['eval'][1]])
-
+# # assumes X, Y are Nx1, Y is Nx1
+# def LinReg(X, Y):
+#     if X.ndim == 1:
+#         X = X[:, np.newaxis]
+#     if Y.ndim == 1:
+#         Y = Y[:, np.newaxis]
+#     print(X.shape, Y.shape)
+#     # augment X with set of 1's
+#     X = np.concatenate((np.ones_like(X), X), axis=1)
+#     return np.linalg.pinv(X.T @ X) @ X.T @ Y
+#
+# # regular vs. power
+# plt.figure(figsize=(8,6))
+# mnist_files = glob.glob('runs/many_runs/mnist*.pkl')
+# mnist_files2 = glob.glob('runs/_initialized2/mnist*.pkl')
+# results1 = []   # linear dense projection
+# results2 = []   # power dense projection
+# results3 = []   # rff
+# for filename in (mnist_files + mnist_files2):
+#     with open(filename, 'rb') as file_handle:
+#         model_dict = pickle.load(file_handle)
+#
+#     if model_dict['model_type'] == 'linear':
+#         results1.append([model_dict['intrinsic_dim'], model_dict['eval'][1]])
+#     elif model_dict['model_type'] == 'power':
+#         results2.append([model_dict['intrinsic_dim'], model_dict['eval'][1]])
+#     else:
+#         results3.append([model_dict['intrinsic_dim'], model_dict['eval'][1]])
+#
 # results = np.array(results1)
 # # plt.scatter(results[:, 0], results[:, 1], c='b', alpha=0.2, marker='x')
 # # b, m = LinReg(1/results[:, 0], results[:, 1])
@@ -64,39 +64,53 @@ for filename in (mnist_files + mnist_files2):
 #     stds[i] = np.std(results[results[:, 0] == id, 1])
 # plt.plot(ids, means, 'b.-')
 # plt.errorbar(ids, means, yerr=stds, c='b', capsize=5, elinewidth=1)
+#
+# # overall_accuracy = 0.9799
+# data_mnist_mlp_2_200_standard = np.array([
+#     [10, 0.2023],[50, 0.4345],[100, 0.6124],[200, 0.7551],[300, 0.8189],[350, 0.8347],[375, 0.8565],[400, 0.8516],[425, 0.8596],[450, 0.8578],[475, 0.8621],[500, 0.8693],[525, 0.8803],[550, 0.8787],[575, 0.8789],[600, 0.886],[625, 0.8935],[650, 0.8889],[675, 0.892],[700, 0.8932],[725, 0.901],[750, 0.9001],[775, 0.8966],[800, 0.9004],[850, 0.9081],[900, 0.9104],[1000, 0.9163],[1250, 0.9276],[1500, 0.9302]
+# ])
+# plt.plot(data_mnist_mlp_2_200_standard[:, 0], data_mnist_mlp_2_200_standard[:, 1], 'g.-')
+# plt.legend(['Local 784-200-200', 'Li et. al (2018) 784-200-200'])
+#
+# # results = np.array(results2)
+# # # b, m = LinReg(1/results[:, 0], results[:, 1])
+# # # x = np.arange(1, 1000)
+# # # y = m/x + b
+# # # plt.plot(x, y, c='r')
+# # # plt.scatter(results[:, 0], results[:, 1], c='r', alpha=0.2, marker='x')
+# # # get means for every intrinsic dimension value
+# # ids = np.linspace(100, 1000, 10)
+# # means = np.zeros((10, ))
+# # stds = np.zeros((10, ))
+# # for i, id in enumerate(ids):
+# #     means[i] = np.mean(results[results[:, 0] == id, 1])
+# #     stds[i] = np.std(results[results[:, 0] == id, 1])
+# # plt.plot(ids, means, 'r.-')
+# # # plt.errorbar(ids, means, yerr=stds, c='r', capsize=5, elinewidth=1)
+#
+# # results = np.array(results3)
+# # # b, m = LinReg(1/results[:, 0], results[:, 1])
+# # # x = np.arange(1, 1000)
+# # # y = m/x + b
+# # # plt.plot(x, y, c='k')
+# # # get means for every intrinsic dimension value
+# # # plt.scatter(results[:, 0], results[:, 1], c='k', alpha=0.2, marker='x')
+# # ids = np.linspace(100, 1000, 10)
+# # means = np.zeros((10, ))
+# # for i, id in enumerate(ids):
+# #     means[i] = np.mean(results[results[:, 0] == id, 1])
+# #     stds[i] = np.std(results[results[:, 0] == id, 1])
+# # plt.plot(ids, means, 'k.-')
+# # plt.errorbar(ids, means, yerr=stds, c='k', capsize=5, elinewidth=1)
 
-results = np.array(results2)
-# b, m = LinReg(1/results[:, 0], results[:, 1])
-# x = np.arange(1, 1000)
-# y = m/x + b
-# plt.plot(x, y, c='r')
-# plt.scatter(results[:, 0], results[:, 1], c='r', alpha=0.2, marker='x')
-# get means for every intrinsic dimension value
-ids = np.linspace(100, 1000, 10)
-means = np.zeros((10, ))
-stds = np.zeros((10, ))
-for i, id in enumerate(ids):
-    means[i] = np.mean(results[results[:, 0] == id, 1])
-    stds[i] = np.std(results[results[:, 0] == id, 1])
-plt.plot(ids, means, 'r.-')
-# plt.errorbar(ids, means, yerr=stds, c='r', capsize=5, elinewidth=1)
+plt.figure(figsize=(8, 6))
+data = np.array([(100, 0.4271000027656555), (200, 0.638400018215179), (300, 0.7049999833106995), (400, 0.7555999755859375), (500, 0.7903000116348267),(600, 0.7962999939918518), (700, 0.8083000183105469),   (800, 0.1009000018290213), (900, 0.14800000190734863),(1000, 0.10279999673366547)])
+data2 = np.array([(800, 0.8184000253677368), (900, 0.8392000198364258), (1000, 0.8379999995231628)])
+plt.plot(data[:, 0], data[:, 1], 'o-', c='#ca5895')
+plt.plot(data2[:, 0], data2[:, 1], 'ko-')
+plt.legend(['Trainable P lr=0.001','Trainable P lr=0.0001'], loc=3)
 
-# results = np.array(results3)
-# # b, m = LinReg(1/results[:, 0], results[:, 1])
-# # x = np.arange(1, 1000)
-# # y = m/x + b
-# # plt.plot(x, y, c='k')
-# # get means for every intrinsic dimension value
-# # plt.scatter(results[:, 0], results[:, 1], c='k', alpha=0.2, marker='x')
-# ids = np.linspace(100, 1000, 10)
-# means = np.zeros((10, ))
-# for i, id in enumerate(ids):
-#     means[i] = np.mean(results[results[:, 0] == id, 1])
-#     stds[i] = np.std(results[results[:, 0] == id, 1])
-# plt.plot(ids, means, 'k.-')
-# plt.errorbar(ids, means, yerr=stds, c='k', capsize=5, elinewidth=1)
-
-plt.ylim([0.3, 0.9])
+# plt.ylim([0, 1])
 plt.xlim(0, 1025)
 plt.ylabel('Accuracy')
 plt.xlabel('Intrinsic dimension')
@@ -104,7 +118,7 @@ plt.xlabel('Intrinsic dimension')
 plt.grid()
 
 # plt.show()
-plt.savefig('plots/mnist_initialized.pdf')
+plt.savefig('plots/trainable_p_breakdown.pdf')
 
 # # power w/ different coefficients
 # mnist_files = glob.glob('runs/power_coefficients/mnist*.pkl')

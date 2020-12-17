@@ -20,7 +20,7 @@ font = {'family': 'cmr10', 'size': 18}
 mpl.rc('font', **font)  # change the default font to Computer Modern Roman
 mpl.rcParams['axes.unicode_minus'] = False  # because cmr10 does not have a Unicode minus sign
 
-# assumes X, Y are Nx1, Y is Nx1
+# # assumes X, Y are Nx1, Y is Nx1
 def LinReg(X, Y):
     if X.ndim == 1:
         X = X[:, np.newaxis]
@@ -31,12 +31,10 @@ def LinReg(X, Y):
     X = np.concatenate((np.ones_like(X), X), axis=1)
     return np.linalg.pinv(X.T @ X) @ X.T @ Y
 
-ms = []
-
 # regular vs. power
 plt.figure(figsize=(8,6))
-mnist_files = glob.glob('runs/mnist_nonnormalized_p_/mnist*.pkl')
-mnist_files2 = glob.glob('runs/many_runs/mnist*.pkl')
+mnist_files = glob.glob('runs/initialized2/mnist*.pkl')
+mnist_files2 = glob.glob('runs/_initialized2/mnist*.pkl')
 results1 = []   # linear dense projection
 results2 = []   # power dense projection
 results3 = []   # rff
@@ -51,25 +49,21 @@ for filename in (mnist_files + mnist_files2):
     else:
         results3.append([model_dict['intrinsic_dim'], model_dict['eval'][1]])
 
-results = np.array(results1)
-# plt.scatter(results[:, 0], results[:, 1], c='b', alpha=0.2, marker='x')
-# b, m = LinReg(1/results[:, 0], results[:, 1])
-# x = np.arange(1, 1000)
-# y = m/x + b
-# plt.plot(x, y, c='b')
-# get means for every intrinsic dimension value
-ids = np.linspace(100, 1000, 10)
-means = np.zeros((10, ))
-stds = np.zeros((10, ))
-for i, id in enumerate(ids):
-    means[i] = np.mean(results[results[:, 0] == id, 1])
-    stds[i] = np.std(results[results[:, 0] == id, 1])
-plt.plot(ids, means, 'b.-')
-plt.errorbar(ids, means, yerr=stds, c='b', capsize=5, elinewidth=1)
-
-pickle.dump((ids, means, stds), open('test.pkl', 'wb'))
-
-ms.append((means, stds))
+# results = np.array(results1)
+# # plt.scatter(results[:, 0], results[:, 1], c='b', alpha=0.2, marker='x')
+# # b, m = LinReg(1/results[:, 0], results[:, 1])
+# # x = np.arange(1, 1000)
+# # y = m/x + b
+# # plt.plot(x, y, c='b')
+# # get means for every intrinsic dimension value
+# ids = np.linspace(100, 1000, 10)
+# means = np.zeros((10, ))
+# stds = np.zeros((10, ))
+# for i, id in enumerate(ids):
+#     means[i] = np.mean(results[results[:, 0] == id, 1])
+#     stds[i] = np.std(results[results[:, 0] == id, 1])
+# plt.plot(ids, means, 'b.-')
+# plt.errorbar(ids, means, yerr=stds, c='b', capsize=5, elinewidth=1)
 
 results = np.array(results2)
 # b, m = LinReg(1/results[:, 0], results[:, 1])
@@ -81,40 +75,45 @@ results = np.array(results2)
 ids = np.linspace(100, 1000, 10)
 means = np.zeros((10, ))
 stds = np.zeros((10, ))
+
+ids, means, stds = pickle.load(open('test.pkl', 'rb'))
+# plt.plot(ids, means, '--')
+plt.errorbar(ids, means, linestyle='--', c='b', yerr=stds, capsize=5, elinewidth=1, alpha=0.5)
+
 for i, id in enumerate(ids):
     means[i] = np.mean(results[results[:, 0] == id, 1])
     stds[i] = np.std(results[results[:, 0] == id, 1])
 plt.plot(ids, means, 'r.-')
-plt.errorbar(ids, means, yerr=stds, c='r', capsize=5, elinewidth=1)
-ms.append((means, stds))
+# plt.errorbar(ids, means, yerr=stds, c='r', capsize=5, elinewidth=1)
 
-results = np.array(results3)
-# b, m = LinReg(1/results[:, 0], results[:, 1])
-# x = np.arange(1, 1000)
-# y = m/x + b
-# plt.plot(x, y, c='k')
-# get means for every intrinsic dimension value
-# plt.scatter(results[:, 0], results[:, 1], c='k', alpha=0.2, marker='x')
-ids = np.linspace(100, 1000, 10)
-means = np.zeros((10, ))
-for i, id in enumerate(ids):
-    means[i] = np.mean(results[results[:, 0] == id, 1])
-    stds[i] = np.std(results[results[:, 0] == id, 1])
-plt.plot(ids, means, 'k.-')
-plt.errorbar(ids, means, yerr=stds, c='k', capsize=5, elinewidth=1)
+plt.legend(['Initialized using trained $\lambda_s, \lambda_c$', '$\lambda_s=\lambda_c=1$'])
+
+# print(ids, data, errs)
+
+# results = np.array(results3)
+# # b, m = LinReg(1/results[:, 0], results[:, 1])
+# # x = np.arange(1, 1000)
+# # y = m/x + b
+# # plt.plot(x, y, c='k')
+# # get means for every intrinsic dimension value
+# # plt.scatter(results[:, 0], results[:, 1], c='k', alpha=0.2, marker='x')
+# ids = np.linspace(100, 1000, 10)
+# means = np.zeros((10, ))
+# for i, id in enumerate(ids):
+#     means[i] = np.mean(results[results[:, 0] == id, 1])
+#     stds[i] = np.std(results[results[:, 0] == id, 1])
+# plt.plot(ids, means, 'k.-')
+# plt.errorbar(ids, means, yerr=stds, c='k', capsize=5, elinewidth=1)
 
 plt.ylim([0.3, 0.9])
 plt.xlim(0, 1025)
 plt.ylabel('Accuracy')
 plt.xlabel('Intrinsic dimension')
-plt.legend(['Linear', 'Power', 'RFF'], loc=4)
+# plt.legend(['Linear', 'Power', 'RFF'], loc=4)
 plt.grid()
-ms.append((means, stds))
 
-plt.show()
-
-print(ms)
-# plt.savefig('plots/many.pdf')
+# plt.show()
+plt.savefig('plots/mnist_initialized.pdf')
 
 # power w/ different coefficients
 # mnist_files = glob.glob('runs/power_coefficients/mnist*.pkl')
@@ -136,15 +135,33 @@ print(ms)
 #     (0.01, 0.001),
 #     (1, 0),
 #     (0.5, 0),
-#     (0.1, 0)
+#     (0.1, 0),
 # ]
-# plt.figure()
+#
+# plt.figure(figsize=(8, 6))
+#
 # for lambda_s, lambda_c in experiments:
+#     print(lambda_s, lambda_c)
 #     rows = (results[:, 0] == lambda_s) & (results[:, 1] == lambda_c)
-#     plt.scatter(results[rows, 2], results[rows, 3])
-# plt.title('784-200-200 FC MNIST Accuracy vs. Intrinsic Dimension for Power Types')
+#     ids = np.argsort(results[rows, 2])
+#     accuracies = results[rows, 3][ids]
+#     plt.plot(results[rows, 2][ids], accuracies, '.-', label=f'$\lambda_s: {lambda_s}, \lambda_c: {lambda_c}$')
+#
+# ids = np.linspace(100, 1000, 10)
+# coeff_10 = [0.3611, 0.6424, 0.7131, 0.7533, 0.7862, 0.8132, 0.7945, 0.8287, 0.8351, 0.8355]
+# coeff_100 = [0.3459, 0.5003, 0.6152, 0.6305, 0.6751, 0.7429, 0.7645, 0.7638, 0.7430, 0.7518]
+# plt.plot(ids, coeff_10, '.-', label=f'$\lambda_s: {10}, \lambda_c: {10}$')
+# plt.plot(ids, coeff_100, '.-', label=f'$\lambda_s: {100}, \lambda_c: {100}$')
+# # plt.plot(ids, coeff_100)
+#
 # plt.ylabel('Accuracy')
 # plt.xlabel('Intrinsic dimension')
-# plt.legend([f'$\lambda_s: {lambda_s}; \lambda_c: {lambda_c}$' for lambda_s, lambda_c in experiments])
+# plt.legend(fontsize='x-small', loc=4)
+# # plt.legend([f'$\lambda_s: {lambda_s}; \lambda_c: {lambda_c}$' for lambda_s, lambda_c in experiments],
+# #            fontsize='x-small', loc=4)
+# plt.ylim([0.3, 0.9])
+# plt.xlim([0, 1025])
+# plt.grid()
 #
-# plt.show()
+# # plt.show()
+# plt.savefig('plots/power_coefficients.pdf')
